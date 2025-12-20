@@ -17,10 +17,10 @@ Anyone can navigate available sport fields.
 View available time slots for a given date.  
 ```json
 {
-    "name" : "Santa maria",
-    "sport" : "tennis",
-    "address" : "via tommaso luciani TS",
-    "slots" : []
+    "name"      : "Santa maria",
+    "sport"     : "tennis",
+    "address"   : "via tommaso luciani TS",
+    "slots"     : []
 }
 ```
 

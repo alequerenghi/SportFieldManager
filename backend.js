@@ -16,6 +16,14 @@ app.use(express.static("public"));
 // TODO
 const verifyToken = (req, res, next) => {};
 
+const verifyDate = (req, res, next) => {
+  const date = new Date(req.date);
+  if (date < Date.now()) {
+    throw Error("Cannot select previous dates");
+  }
+  next();
+};
+
 /**
  * FIELDS
  */
@@ -37,9 +45,25 @@ app
     }
     res.json(fieldDetails);
   })
-  /**
-   * GET SLOTS
-   */
+  .get("/:id/slots?date=YYYY-MM-DD", async (req, res) => {
+    const date = new Date(req.query.date);
+    const fieldId = req.params.id;
+    const db = await getConnection();
+    const fieldDetails = await db.collection("fields").findOne({ fieldId });
+    if (fieldDetails) {
+      const bookings = await db
+        .collection("bookings")
+        .find({ date, fieldId })
+        .toArray();
+      const availableSlots = fieldDetails.slots;
+      availableSlots.forEach((element) =>
+        bookings.includes(element)
+          ? (element.available = false)
+          : (element.available = true)
+      );
+      res.json(availableSlots);
+    }
+  })
   .post("/:id/bookings", verifyToken, async (req, res) => {
     /** TAKE SLOT */
   })
