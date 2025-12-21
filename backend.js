@@ -14,7 +14,30 @@ app.use("/api/auth", router);
 app.use(express.static("public"));
 
 // TODO
-const verifyToken = (req, res, next) => {};
+const verifyToken = (req, res, next) => {
+  const cookie = req.cookies;
+  if (typeof cookie !== "undefined") {
+  }
+  //   const bearerHeader = req.headers["authorization"];
+  //   if (typeof bearerHeader !== "undefined") {
+  //     const bearerToken = bearerHeader.split(" ")[1];
+  //     req.token = bearerToken;
+  //     next();
+  //   } else {
+  //     res.sendStatus(403);
+  //   }
+  // };
+  // (req, res) => {
+  //   jwt.verify(req.token, "secretkey", (err, authData) => {
+  //     if (err) {
+  //       res.sendStatus(403);
+  //     } else {
+  //       res.json({
+  //         /* data */
+  //       });
+  //     }
+  //   });
+};
 
 const verifyDate = (req, res, next) => {
   const date = new Date(req.date);
@@ -41,7 +64,7 @@ app
     const db = await getConnection();
     const fieldDetails = await db.collection("fields").findOne({ fieldId });
     if (!fieldDetails) {
-      return res.status(404).send(`Tournamend ${fieldId} not found`);
+      return res.status(404).send(`Tournament ${fieldId} not found`);
     }
     res.json(fieldDetails);
   })

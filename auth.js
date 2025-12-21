@@ -1,7 +1,7 @@
 import express from "express";
 import { sign } from "jsonwebtoken";
 import { getConnection } from "./dbConnector";
-import { compare, genSalt, hash } from "bcrypt";
+import { compare, hash } from "bcrypt";
 
 const router = express.Router();
 router.post("/signin", async (req, res) => {

@@ -3,6 +3,7 @@
 Possible to view a list of users filtered by a search parameter.
 See: 
 + tournaments created by them
+```
 ```json
 {
     "username"  : "aleq",
