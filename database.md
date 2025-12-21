@@ -3,7 +3,6 @@
 Possible to view a list of users filtered by a search parameter.
 See: 
 + tournaments created by them
-```
 ```json
 {
     "username"  : "aleq",
@@ -18,11 +17,16 @@ Anyone can navigate available sport fields.
 View available time slots for a given date.  
 ```json
 {
-    "name"      : "Santa maria",
-    "sport"     : "tennis",
-    "address"   : "via tommaso luciani TS",
-    "slots"     : []
+    "_id"         : "ObjectId",
+    "name"        : "City Sports Arena",
+    "sport"       : "football",
+    "location"    : "Downtown",
+    "openingHours": {
+        "start" : "08:00",
+        "end"   : "22:00"
+  }
 }
+
 ```
 
 ## Bookings
@@ -30,11 +34,17 @@ Authenticated users can book any free time slot. **Slots cannot be booked more t
 Users may cancel upcoming bookings
 ```json
 {
-    "booking_ID"    : 13423,
-    "user_ID"       : 23423,
-    "field_ID"      : 3242,
-    "slot"          : "lun-10-12"
+    "_id"       : "ObjectId",
+    "fieldId"   : "ObjectId",
+    "userId"    : "ObjectId",
+    "date"      : "2025-01-10",
+    "slot"      : {
+        "start" : "18:00",
+        "end"   : "19:00"
+    },
+    "createdAt" : "Date"
 }
+
 ```
 
 ## Tournaments

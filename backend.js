@@ -13,30 +13,18 @@ app.use(cookieParser());
 app.use("/api/auth", router);
 app.use(express.static("public"));
 
-// TODO
 const verifyToken = (req, res, next) => {
-  const cookies = req.cookies;
-  if (typeof cookies !== "undefined") {
+  const token = req.cookies?.token;
+  if (typeof token === "undefined") {
+    return res.redirect("/api/auth/login");
   }
-  //   const bearerHeader = req.headers["authorization"];
-  //   if (typeof bearerHeader !== "undefined") {
-  //     const bearerToken = bearerHeader.split(" ")[1];
-  //     req.token = bearerToken;
-  //     next();
-  //   } else {
-  //     res.sendStatus(403);
-  //   }
-  // };
-  // (req, res) => {
-  //   jwt.verify(req.token, "secretkey", (err, authData) => {
-  //     if (err) {
-  //       res.sendStatus(403);
-  //     } else {
-  //       res.json({
-  //         /* data */
-  //       });
-  //     }
-  //   });
+  verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).send("Expired or invalid token");
+    }
+    req.token = decoded;
+    next();
+  });
 };
 
 const verifyDate = (req, res, next) => {
@@ -53,12 +41,12 @@ const verifyDate = (req, res, next) => {
 app
   .route("/api/fields")
   .get("?q=:query", async (req, res) => {
-    const query = processQuery(req.query);
+    const { q } = req.query;
+    const query = processQuery(q);
     const db = await getConnection();
     const foundFields = await db.collection("fields").find({ query }).toArray();
     res.json(foundFields);
   })
-  // TODO field details
   .get("/:id", async (req, res) => {
     const fieldId = req.params.id;
     const db = await getConnection();
@@ -88,10 +76,52 @@ app
     }
   })
   .post("/:id/bookings", verifyToken, async (req, res) => {
-    /** TAKE SLOT */
+    // verify date
+    const booking = req.body;
+    if (booking.date < Date.now()) {
+      return res.status(403).send("Forbidden");
+    }
+    if (booking.slot.start > booking.slot.end) {
+      return res.status(400).send("Malformed booking");
+    }
+    const { date, fieldId } = booking;
+    const db = await getConnection();
+    const fieldDetails = await db.collection("fields").findOne({ fieldId });
+    if (
+      fieldDetails.openingHours.start < booking.slot.start ||
+      fieldDetails.openingHours.end > booking.slot.end
+    ) {
+      return res.status(403).send("Forbidden");
+    }
+    const alreadyTaken = await db
+      .collection("bookings")
+      .find({ date, fieldId })
+      .toArray();
+    if (
+      alreadyTaken &&
+      booking.slot.start < alreadyTaken.slot.end &&
+      alreadyTaken.slot.start < booking.slot.end
+    ) {
+      return res.status(409).send("Slot already booked");
+    }
+    const inserted = await db
+      .collection("bookings")
+      .insertOne({ booking, user_id: req.token._id });
+    res.json({ bookingId: inserted.insertedId });
   })
   .delete("/:id/bookings/:bookingId", verifyToken, async (req, res) => {
-    /** remove taken slot */
+    const id = req.params.id;
+    const bookingId = req.params.bookingId;
+    const db = await getConnection();
+    const toDelete = await db.collection("bookings").findOne({ id, bookingId });
+    if (!toDelete) {
+      return res.status(404).send("Not found");
+    }
+    if (toDelete.user_id !== req.token._id) {
+      return res.status(403).send("Forbidden");
+    }
+    await db.collection("bookings").deleteOne({ id, bookingId });
+    res.send("Booking deleted successfully");
   });
 /**
  * TOURNAMENTS
@@ -107,7 +137,7 @@ app
       .toArray();
     res.json(foundTournaments);
   })
-  .post("", verifyToken, async (req, res) => {
+  .post(verifyToken, async (req, res) => {
     const { name, sport, maxTeams, startDate } = req.body;
     if (startDate < Date.now()) {
       res.status(400).send("Tournaments must start in the future");
