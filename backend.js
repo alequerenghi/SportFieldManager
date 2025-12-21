@@ -15,8 +15,8 @@ app.use(express.static("public"));
 
 // TODO
 const verifyToken = (req, res, next) => {
-  const cookie = req.cookies;
-  if (typeof cookie !== "undefined") {
+  const cookies = req.cookies;
+  if (typeof cookies !== "undefined") {
   }
   //   const bearerHeader = req.headers["authorization"];
   //   if (typeof bearerHeader !== "undefined") {
