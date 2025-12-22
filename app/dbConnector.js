@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 
-const uri = "connection_string";
+const uri = "mongodb://mongo:27017/superMongo";
 let cachedDb = null;
 let mongoClient = null;
 
