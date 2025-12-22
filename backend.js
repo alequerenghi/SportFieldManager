@@ -1,7 +1,9 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import { verify } from "jsonwebtoken";
 import router from "./auth";
+import { verify } from "jsonwebtoken";
+import { robin } from "roundrobin";
+import { z } from "zod";
 import { getConnection } from "./dbConnector";
 
 const PORT = 3000;
@@ -27,14 +29,6 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-const verifyDate = (req, res, next) => {
-  const date = new Date(req.date);
-  if (date < Date.now()) {
-    throw Error("Cannot select previous dates");
-  }
-  next();
-};
-
 /**
  * FIELDS
  */
@@ -42,80 +36,102 @@ app
   .route("/api/fields")
   .get("?q=:query", async (req, res) => {
     const { q } = req.query;
-    const query = processQuery(q);
+    const regex = { $regex: q, $options: "i" };
+    const filter = {
+      $or: [{ name: regex }, { sport: regex }, { location: regex }],
+    };
     const db = await getConnection();
-    const foundFields = await db.collection("fields").find({ query }).toArray();
+    const foundFields = await db.collection("fields").find(filter).toArray();
     res.json(foundFields);
   })
   .get("/:id", async (req, res) => {
-    const fieldId = req.params.id;
+    const { id } = req.params;
     const db = await getConnection();
-    const fieldDetails = await db.collection("fields").findOne({ fieldId });
+    const fieldDetails = await db.collection("fields").findOne({ _id: id });
     if (!fieldDetails) {
       return res.status(404).send(`Tournament ${fieldId} not found`);
     }
     res.json(fieldDetails);
   })
-  .get("/:id/slots?date=YYYY-MM-DD", async (req, res) => {
-    const date = new Date(req.query.date);
-    const fieldId = req.params.id;
-    const db = await getConnection();
-    const fieldDetails = await db.collection("fields").findOne({ fieldId });
-    if (fieldDetails) {
+  .get(
+    "/:id/slots?date=YYYY-MM-DD",
+    (req, res, next) => {
+      try {
+        const { date } = req.query;
+        const dateOnly = new Date(date).toDateString();
+        req.date = new Date(dateOnly);
+        next();
+      } catch (err) {
+        return res.status(403).send("Malformed date");
+      }
+    },
+    async (req, res) => {
+      const { id } = req.params;
+      const date = req.date;
+      const db = await getConnection();
+      const field = await db.collection("fields").findOne({ _id: id });
+      if (!field) {
+        return res.status(404).send("Not found");
+      }
       const bookings = await db
         .collection("bookings")
-        .find({ date, fieldId })
+        .find({ date, fieldId: id })
         .toArray();
-      const availableSlots = fieldDetails.slots;
-      availableSlots.forEach((element) =>
-        bookings.includes(element)
-          ? (element.available = false)
-          : (element.available = true)
-      );
-      res.json(availableSlots);
+      const slots = field.slots
+        .map((i) => ({ slot: i }))
+        .map((i) =>
+          bookings.includes(i) ? (i.available = false) : (i.available = true)
+        );
+      res.json(slots);
     }
-  })
-  .post("/:id/bookings", verifyToken, async (req, res) => {
-    // verify date
-    const booking = req.body;
-    if (booking.date < Date.now()) {
-      return res.status(403).send("Forbidden");
+  )
+  .post(
+    "/:id/bookings",
+    verifyToken,
+    (req, res, next) => {
+      try {
+        let { date } = req.body;
+        date = new Date(date);
+        if (date < Date.now()) {
+          return res.status(403).send("Cannot book in the past");
+        }
+        req.date = new Date(date.toDateString());
+        next();
+      } catch (err) {
+        return res.status(403).send("malformed date");
+      }
+    },
+    async (req, res) => {
+      // verify date
+      const booking = req.body;
+      const { id } = req.params;
+      const db = await getConnection();
+      const field = await db.collection("fields").findOne({ _id: id });
+      if (!field.slots.includes(booking.slot)) {
+        return res.status(403).send("Forbidden");
+      }
+      const alreadyTaken = await db
+        .collection("bookings")
+        .findOne({ date: req.date, slot: booking.slot });
+      if (alreadyTaken) {
+        return res.status(403).send("Booking unavaialble");
+      }
+      const inserted = await db
+        .collection("bookings")
+        .insertOne({ booking, userId: req.token._id });
+      res.json({ bookingId: inserted.insertedId });
     }
-    if (booking.slot.start > booking.slot.end) {
-      return res.status(400).send("Malformed booking");
-    }
-    const { date, fieldId } = booking;
-    const db = await getConnection();
-    const fieldDetails = await db.collection("fields").findOne({ fieldId });
-    const { start, end } = fieldDetails.openingHours;
-    if (start < booking.slot.start && end > booking.slot.end) {
-      return res.status(403).send("Forbidden");
-    }
-    const alreadyTaken = await db
-      .collection("bookings")
-      .find({ date, fieldId })
-      .toArray();
-    if (
-      alreadyTaken &&
-      booking.slot.start < alreadyTaken.slot.end &&
-      alreadyTaken.slot.start < booking.slot.end
-    ) {
-      return res.status(409).send("Slot already booked");
-    }
-    const inserted = await db
-      .collection("bookings")
-      .insertOne({ booking, user_id: req.token._id });
-    res.json({ bookingId: inserted.insertedId });
-  })
+  )
   .delete("/:id/bookings/:bookingId", verifyToken, async (req, res) => {
-    const id = req.params.id;
-    const bookingId = req.params.bookingId;
+    const { id, bookingId } = req.params;
     const db = await getConnection();
-    const toDelete = await db.collection("bookings").findOne({ id, bookingId });
+    const toDelete = await db
+      .collection("bookings")
+      .findOne({ fieldId: id, _id: bookingId });
     if (!toDelete) {
       return res.status(404).send("Not found");
     }
-    if (toDelete.user_id !== req.token._id) {
+    if (toDelete.userId !== req.token._id) {
       return res.status(403).send("Forbidden");
     }
     await db.collection("bookings").deleteOne({ id, bookingId });
@@ -125,6 +141,15 @@ app
  * TOURNAMENTS
  */
 
+const TournamentSchema = z.object({
+  name: z.string().min(3),
+  sport: z.string(),
+  location: z.string(),
+  startDate: z.string().refine((d) => !isNaN(Date.parse(d))),
+  endDate: z.string().refine((d) => !isNaN(Date.parse(d))),
+  maxTeams: z.number().int().positive(),
+});
+
 const assertCreator = async (req, res, next) => {
   const { id } = req.params;
   const db = await getConnection();
@@ -132,7 +157,7 @@ const assertCreator = async (req, res, next) => {
   if (!tournamentFound) {
     return res.status(404).send("Not found");
   }
-  if (tournamentFound.creatorId !== req.token._id) {
+  if (tournamentFound.userId !== req.token._id) {
     return res.status(403).send("Forbidden");
   }
   next();
@@ -141,26 +166,28 @@ app
   .route("/api/tournaments")
   .get("?q=query", async (req, res) => {
     const { q } = req.query;
-    const query = processQuery(q);
+    const regex = { $regex: q, $options: "i" };
+    const filter = { $or: [{ name: regex }, { sport: regex }] };
     const db = await getConnection();
     const tournaments = await db
       .collection("tournaments")
-      .find({
-        name: { $regex: query },
-        sport: { $regex: query, $options: "i" },
-      })
+      .find(filter)
       .toArray();
     res.json(tournaments);
   })
   .post(verifyToken, async (req, res) => {
-    const tournament = req.body;
+    const parsed = TournamentSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(304).send("Malformed package");
+    }
+    const tournament = parsed.data;
     if (tournament.startDate < Date.now()) {
       res.status(403).send("Tournaments must start in the future");
     } else {
       const db = await getConnection();
       const insertResult = await db
         .collection("tournaments")
-        .insertOne({ tournament, creatorId: req.token._id });
+        .insertOne({ tournament, userId: req.token._id });
       if (!insertResult) {
         res.status(500).send("Server error");
       } else {
@@ -171,13 +198,11 @@ app
   .get("/:id", async (req, res) => {
     const { id } = req.params;
     const db = await getConnection();
-    const tournamentDetails = await db
-      .collection("tournaments")
-      .findOne({ id });
-    if (!tournamentDetails) {
-      return res.status(404).send(`Tournament ${tournamentId} not found`);
+    const tournament = await db.collection("tournaments").findOne({ _id: id });
+    if (!tournament) {
+      return res.status(404).send(`Tournament ${id} not found`);
     }
-    res.json(tournamentDetails);
+    res.json(tournament);
   })
   .put("/:id", verifyToken, assertCreator, async (req, res) => {
     const { id } = req.params;
@@ -208,7 +233,25 @@ app
     verifyToken,
     assertCreator,
     async (req, res) => {
-      // TODO
+      const { id } = req.params;
+      const db = await getConnection();
+      const tournament = await db
+        .collection("tournaments")
+        .findOne({ _id: id });
+      const { date, teams, status } = tournament;
+      const roundRobin = robin(
+        teams.length,
+        teams.map((t) => t.name)
+      );
+      const matches = roundRobin.map(async (m) => ({
+        tournamentId: id,
+        teams: m,
+        date,
+        status: "upcoming",
+        result: null,
+      }));
+      await db.collection("matches").insertMany(matches);
+      res.json(tournament, matches);
     }
   )
   .get("/:id/matches", async (req, res) => {
@@ -242,7 +285,7 @@ app
 
 app
   .route("/api/matches")
-  .get("/id", async (req, res) => {
+  .get("/:id", async (req, res) => {
     const { id } = req.params;
     const db = await getConnection();
     const match = await db.collection("matches").findOne({ id });
@@ -263,6 +306,28 @@ app
     } else {
       res.status(500).send("Server error");
     }
+  });
+
+app
+  .route("/api/users")
+  .get("?q=query", async (req, res) => {
+    const { q } = req.query;
+    const db = await getConnection();
+    const users = await db
+      .collection("users")
+      .find({ name: { $regex: q, $options: "i" } })
+      .toArray();
+    res.json(users);
+  })
+  .get("/:id", async (req, res) => {
+    const { id } = req.params;
+    const db = await getConnection();
+    const user = await db.collection("users").findOne({ _id: id });
+    const tournaments = await db
+      .collection("tournaments")
+      .find({ userId: id })
+      .toArray();
+    res.send({ ...user, tournaments });
   });
 
 app.use(verifyToken);

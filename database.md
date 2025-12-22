@@ -27,10 +27,7 @@ View available time slots for a given date.
   "name": "City Sports Arena",
   "sport": "football",
   "location": "Downtown",
-  "openingHours": {
-    "start": "08:00",
-    "end": "22:00"
-  }
+  "slots": ["8:00", "9:00"]
 }
 ```
 
@@ -45,10 +42,8 @@ Users may cancel upcoming bookings
   "fieldId": "ObjectId",
   "userId": "ObjectId",
   "date": "2025-01-10",
-  "slot": {
-    "start": "18:00",
-    "end": "19:00"
-  },
+  "slot": "18:00",
+
   "createdAt": "Date"
 }
 ```
