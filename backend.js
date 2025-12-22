@@ -87,10 +87,8 @@ app
     const { date, fieldId } = booking;
     const db = await getConnection();
     const fieldDetails = await db.collection("fields").findOne({ fieldId });
-    if (
-      fieldDetails.openingHours.start < booking.slot.start ||
-      fieldDetails.openingHours.end > booking.slot.end
-    ) {
+    const { start, end } = fieldDetails.openingHours;
+    if (start < booking.slot.start && end > booking.slot.end) {
       return res.status(403).send("Forbidden");
     }
     const alreadyTaken = await db
@@ -126,26 +124,43 @@ app
 /**
  * TOURNAMENTS
  */
+
+const assertCreator = async (req, res, next) => {
+  const { id } = req.params;
+  const db = await getConnection();
+  const tournamentFound = db.collection("tournaments").findOne({ id });
+  if (!tournamentFound) {
+    return res.status(404).send("Not found");
+  }
+  if (tournamentFound.creatorId !== req.token._id) {
+    return res.status(403).send("Forbidden");
+  }
+  next();
+};
 app
   .route("/api/tournaments")
   .get("?q=query", async (req, res) => {
-    const query = processQuery(req.query);
+    const { q } = req.query;
+    const query = processQuery(q);
     const db = await getConnection();
-    const foundTournaments = await db
+    const tournaments = await db
       .collection("tournaments")
-      .find({ query })
+      .find({
+        name: { $regex: query },
+        sport: { $regex: query, $options: "i" },
+      })
       .toArray();
-    res.json(foundTournaments);
+    res.json(tournaments);
   })
   .post(verifyToken, async (req, res) => {
-    const { name, sport, maxTeams, startDate } = req.body;
-    if (startDate < Date.now()) {
-      res.status(400).send("Tournaments must start in the future");
+    const tournament = req.body;
+    if (tournament.startDate < Date.now()) {
+      res.status(403).send("Tournaments must start in the future");
     } else {
       const db = await getConnection();
       const insertResult = await db
         .collection("tournaments")
-        .insertOne({ name, sport, maxTeams, startDate });
+        .insertOne({ tournament, creatorId: req.token._id });
       if (!insertResult) {
         res.status(500).send("Server error");
       } else {
@@ -154,31 +169,101 @@ app
     }
   })
   .get("/:id", async (req, res) => {
-    const tournamentId = req.params.id;
+    const { id } = req.params;
     const db = await getConnection();
     const tournamentDetails = await db
       .collection("tournaments")
-      .findOne({ tournamentId });
+      .findOne({ id });
     if (!tournamentDetails) {
       return res.status(404).send(`Tournament ${tournamentId} not found`);
     }
     res.json(tournamentDetails);
   })
-  .put("/:id", verifyToken, async (req, res) => {
-    const { name, maxTeams } = req.body;
-    const tournamentId = req.params.id;
+  .put("/:id", verifyToken, assertCreator, async (req, res) => {
+    const { id } = req.params;
     const db = await getConnection();
     const updated = await db
       .collection("tournaments")
-      .findOneAndUpdate({ tournamentId }, { name, maxTeams });
+      .findOneAndUpdate({ _id: id }, { $set: req.body });
     if (updated.ok == 1) {
       res.send("Tournament updated successfully");
     } else {
       res.status(500).send("Server error");
     }
   })
-  .delete("/:id", verifyToken, (req, res) => {})
-  .post("/:id/matches/generate");
+  .delete("/:id", verifyToken, assertCreator, async (req, res) => {
+    const { id } = req.params;
+    const db = await getConnection();
+    const tournament = await db.collection("tournaments").deleteOne({ id });
+    await db.collection("matches").deleteMany({ tournamentId: id });
+    if (!tournament.acknowledged) {
+      res.status(500).send("Server error");
+    } else {
+      res.status(204).send(`Tournament ${id} successfully deleted`);
+    }
+  })
+  // TODO
+  .post(
+    "/:id/matches/generate",
+    verifyToken,
+    assertCreator,
+    async (req, res) => {
+      // TODO
+    }
+  )
+  .get("/:id/matches", async (req, res) => {
+    const { id } = req.params;
+    const db = await getConnection();
+    const matches = await db
+      .collection("matches")
+      .find({ tournamentId: id })
+      .toArray();
+    res.json(matches);
+  })
+  .get("/:id/standings", async (req, res) => {
+    const { id } = req.params;
+    const db = await getConnection();
+    const matches = await db
+      .collection("matches")
+      .find({ tournamentId: id, status: "completed" })
+      .toArray();
+    const tournamentDetails = await db
+      .collection("tournaments")
+      .findOne({ id });
+    const { teams } = tournamentDetails;
+    const standings = teams.map((t) => ({ team: t, score: 0 }));
+    matches.forEach((m) => {
+      standings[teams.findIndex([m.teams[0]])].score += m.score[0];
+      standings[teams.findIndex([m.teams[1]])].score += m.score[1];
+    });
+    const sorted = standings.sort((a, b) => b.score - a.score);
+    res.json(sorted);
+  });
+
+app
+  .route("/api/matches")
+  .get("/id", async (req, res) => {
+    const { id } = req.params;
+    const db = await getConnection();
+    const match = await db.collection("matches").findOne({ id });
+    if (!match) {
+      return res.status(404).send("Not found");
+    }
+    res.json(match);
+  })
+  .put(":id/result", verifyToken, assertCreator, async (req, res) => {
+    const { id } = req.params;
+    const { score } = req.body;
+    const db = await getConnection();
+    const result = db
+      .collection("matches")
+      .updateOne({ _id: id }, { $set: { score, status: "completed" } });
+    if (result.acknowledged) {
+      res.send("Match score added successfully");
+    } else {
+      res.status(500).send("Server error");
+    }
+  });
 
 app.use(verifyToken);
 app.use(express.static("private"));

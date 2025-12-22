@@ -1,4 +1,4 @@
-import { MongoClient, MongoCompatibilityError } from "mongodb";
+import { MongoClient } from "mongodb";
 
 const uri = "connection_string";
 let cachedDb = null;
