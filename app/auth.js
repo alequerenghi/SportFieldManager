@@ -7,6 +7,7 @@ const { sign } = jwt;
 const router = express.Router();
 router.post("/signin", async (req, res) => {
   try {
+    console.log(req.body);
     const { username, password } = req.body;
     const mongo = await getConnection();
     const user = await mongo.collection("users").findOne({ username });
@@ -25,7 +26,7 @@ router.post("/signin", async (req, res) => {
     res.cookie("token", token, { httpOnly: true });
     res.redirect("/index.html");
   } catch (err) {
-    console.err(err);
+    console.error(err);
     res.status(500).send("Error");
   }
 });
