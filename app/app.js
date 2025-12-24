@@ -5,6 +5,7 @@ import roundrobin from "roundrobin";
 import { z } from "zod";
 import router from "./auth.js";
 import { getConnection } from "./dbConnector.js";
+import { ObjectId } from "mongodb";
 const { robin } = roundrobin;
 const { verify } = jwt;
 
@@ -38,9 +39,11 @@ const verifyToken = (req, res, next) => {
 app.get("/api/fields/:id", async (req, res) => {
   const { id } = req.params;
   const db = await getConnection();
-  const fieldDetails = await db.collection("fields").findOne({ _id: id });
+  const fieldDetails = await db
+    .collection("fields")
+    .findOne({ _id: new ObjectId(id) });
   if (!fieldDetails) {
-    return res.status(404).send(`Tournament ${fieldId} not found`);
+    return res.status(404).send(`Not found`);
   }
   res.json(fieldDetails);
 });
@@ -60,7 +63,9 @@ app.get(
     const { id } = req.params;
     const date = req.date;
     const db = await getConnection();
-    const field = await db.collection("fields").findOne({ _id: id });
+    const field = await db
+      .collection("fields")
+      .findOne({ _id: new ObjectId(id) });
     if (!field) {
       return res.status(404).send("Not found");
     }
@@ -121,7 +126,7 @@ app.delete(
     const db = await getConnection();
     const toDelete = await db
       .collection("bookings")
-      .findOne({ fieldId: id, _id: bookingId });
+      .findOne({ fieldId: new ObjectId(id), _id: new ObjectId(bookingId) });
     if (!toDelete) {
       return res.status(404).send("Not found");
     }
@@ -158,7 +163,9 @@ const TournamentSchema = z.object({
 const assertCreator = async (req, res, next) => {
   const { id } = req.params;
   const db = await getConnection();
-  const tournamentFound = db.collection("tournaments").findOne({ id });
+  const tournamentFound = db
+    .collection("tournaments")
+    .findOne({ _id: new ObjectId(id) });
   if (!tournamentFound) {
     return res.status(404).send("Not found");
   }
@@ -187,7 +194,7 @@ app.post("/api/tournaments", verifyToken, async (req, res) => {
     const db = await getConnection();
     const insertResult = await db
       .collection("tournaments")
-      .insertOne({ tournament, userId: req.token._id });
+      .insertOne({ ...tournament, userId: new ObjectId(req.token._id) });
     if (!insertResult) {
       res.status(500).send("Server error");
     } else {
@@ -198,9 +205,11 @@ app.post("/api/tournaments", verifyToken, async (req, res) => {
 app.get("/api/tournaments/:id", async (req, res) => {
   const { id } = req.params;
   const db = await getConnection();
-  const tournament = await db.collection("tournaments").findOne({ _id: id });
+  const tournament = await db
+    .collection("tournaments")
+    .findOne({ _id: new ObjectId(id) });
   if (!tournament) {
-    return res.status(404).send(`Tournament ${id} not found`);
+    return res.status(404).send(`Not found`);
   }
   res.json(tournament);
 });
@@ -213,7 +222,7 @@ app.put(
     const db = await getConnection();
     const updated = await db
       .collection("tournaments")
-      .findOneAndUpdate({ _id: id }, { $set: req.body });
+      .findOneAndUpdate({ _id: new ObjectId(id) }, { $set: req.body });
     if (updated.ok == 1) {
       res.send("Tournament updated successfully");
     } else {
@@ -228,8 +237,12 @@ app.delete(
   async (req, res) => {
     const { id } = req.params;
     const db = await getConnection();
-    const tournament = await db.collection("tournaments").deleteOne({ id });
-    await db.collection("matches").deleteMany({ tournamentId: id });
+    const tournament = await db
+      .collection("tournaments")
+      .deleteOne({ _id: new ObjectId(id) });
+    await db
+      .collection("matches")
+      .deleteMany({ tournamentId: new ObjectId(id) });
     if (!tournament.acknowledged) {
       res.status(500).send("Server error");
     } else {
@@ -244,7 +257,9 @@ app.post(
   async (req, res) => {
     const { id } = req.params;
     const db = await getConnection();
-    const tournament = await db.collection("tournaments").findOne({ _id: id });
+    const tournament = await db
+      .collection("tournaments")
+      .findOne({ _id: new ObjectId(id) });
     const { date, teams, status } = tournament;
     const roundRobin = robin(
       teams.length,
@@ -266,7 +281,7 @@ app.get("/api/tournaments/:id/matches", async (req, res) => {
   const db = await getConnection();
   const matches = await db
     .collection("matches")
-    .find({ tournamentId: id })
+    .find({ tournamentId: new ObjectId(id) })
     .toArray();
   res.json(matches);
 });
@@ -277,7 +292,9 @@ app.get("/api/tournaments/:id/standings", async (req, res) => {
     .collection("matches")
     .find({ tournamentId: id, status: "completed" })
     .toArray();
-  const tournamentDetails = await db.collection("tournaments").findOne({ id });
+  const tournamentDetails = await db
+    .collection("tournaments")
+    .findOne({ _id: new ObjectId(id) });
   const { teams } = tournamentDetails;
   const standings = teams.map((t) => ({ team: t, score: 0 }));
   matches.forEach((m) => {
@@ -291,7 +308,9 @@ app.get("/api/tournaments/:id/standings", async (req, res) => {
 app.get("/api/matches/:id", async (req, res) => {
   const { id } = req.params;
   const db = await getConnection();
-  const match = await db.collection("matches").findOne({ id });
+  const match = await db
+    .collection("matches")
+    .findOne({ _id: new ObjectId(id) });
   if (!match) {
     return res.status(404).send("Not found");
   }
@@ -307,7 +326,10 @@ app.put(
     const db = await getConnection();
     const result = db
       .collection("matches")
-      .updateOne({ _id: id }, { $set: { score, status: "completed" } });
+      .updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { score, status: "completed" } }
+      );
     if (result.acknowledged) {
       res.send("Match score added successfully");
     } else {
@@ -328,15 +350,12 @@ app.get("/api/users", async (req, res) => {
 app.get("/api/users/:id", async (req, res) => {
   const { id } = req.params;
   const db = await getConnection();
-  const user = await db.collection("users").findOne({ _id: id });
+  const user = await db.collection("users").findOne({ _id: new ObjectId(id) });
   const tournaments = await db
     .collection("tournaments")
     .find({ userId: id })
     .toArray();
   res.send({ ...user, tournaments });
 });
-
-app.use(verifyToken);
-app.use(express.static("private"));
 
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
