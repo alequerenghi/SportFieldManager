@@ -9,6 +9,8 @@ services: # something missing???
           - ./app:/usr/src/app
         depends_on:
           - mongo
+        environment:
+          JWT_SECRET: "miciomicio"
   mongo:
         container_name: mongo
         image: mongo
