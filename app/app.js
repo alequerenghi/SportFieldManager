@@ -357,5 +357,9 @@ app.get("/api/users/:id", async (req, res) => {
     .toArray();
   res.send({ ...user, tournaments });
 });
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).send("Server error");
+});
 
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`));

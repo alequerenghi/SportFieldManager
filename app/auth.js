@@ -7,27 +7,25 @@ const { sign } = jwt;
 const router = express.Router();
 router.post("/signin", async (req, res) => {
   try {
-    console.log(req.body);
     const { username, password } = req.body;
     const mongo = await getConnection();
     const user = await mongo.collection("users").findOne({ username });
-    console.log(user);
     if (!user) {
-      return res.status(401).send("Invalid credentials");
+      return res.status(401).send({ error: "Invalid credentials" });
     }
     const passwordMatch = await compare(password, user.password);
     if (!passwordMatch) {
-      return res.status(401).send("Invalid credentials");
+      return res.status(401).json({ error: "Invalid credentials" });
     }
     // maybe modify in the future
     const token = sign({ username }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
     res.cookie("token", token, { httpOnly: true });
-    res.redirect("/index.html");
+    res.redirect("/api/fields?q=''");
   } catch (err) {
     console.error(err);
-    res.status(500).send("Error");
+    res.status(500).json({ error: "Error" });
   }
 });
 
@@ -35,9 +33,7 @@ router.post("/signup", async (req, res) => {
   try {
     const { username, password, name, surname } = req.body;
     const mongo = await getConnection();
-    const u = { username, password, name, surname };
     const user = await mongo.collection("users").findOne({ username });
-    console.log(user);
     if (user) {
       return res.status(409).send(`Username ${username} already taken`);
     }
