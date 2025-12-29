@@ -1,21 +1,34 @@
-services: # something missing???
-  app:
-        container_name: app
-        build: .
-        command: nodemon --watch /usr/src/app -e js app.js
-        ports:
-          - "3000:3000"
-        volumes:
-          - ./app:/usr/src/app
-        depends_on:
-          - mongo
-        environment:
-          JWT_SECRET: "miciomicio"
+services:
+  backend:
+    container_name: backend
+    build: ./backend
+    command: npx nodemon app.js
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/usr/src/app
+    depends_on:
+      - mongo
+    environment:
+      JWT_SECRET: miciomicio
+
+  frontend:
+    container_name: frontend
+    build: ./frontend
+    command: npm run dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - backend
+
   mongo:
-        container_name: mongo
-        image: mongo
-        volumes:
-          - ./data:/data/db
-          - ./mongo-init:/docker-entrypoint-initdb.d
-        ports:
-          - "27017:27017"
+    container_name: mongo
+    image: mongo
+    volumes:
+      - ./data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    ports:
+      - "27017:27017"
