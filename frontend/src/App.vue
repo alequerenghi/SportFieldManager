@@ -1,11 +1,14 @@
 <script setup>
-import { ref } from "vue";
+import { onUpdated, ref } from "vue";
 import Login from "./components/auth/Login.vue";
 import Signup from "./components/auth/Signup.vue";
 import Navbar from "./components/Navbar.vue";
 import Search from "./components/Search.vue";
+import NewTournament from "./components/tournaments/NewTournament.vue";
 
 const pageState = ref("main");
+
+onUpdated(pageState, () => console.log(pageState.value));
 </script>
 
 <template>
@@ -24,7 +27,8 @@ const pageState = ref("main");
     <Signup v-else-if="pageState === 'signup'" @success="pageState = $event" />
     <div v-else>
       <Navbar :state="pageState" @update-state="pageState = $event" />
-      <Search />
+      <NewTournament v-if="pageState === 'new-tournament'" />
+      <Search v-else />
     </div>
   </main>
 </template>

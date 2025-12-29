@@ -3,14 +3,14 @@ import { ref } from "vue";
 
 const emit = defineEmits(["success"]);
 const username = ref("");
-const firstName = ref("");
+const name = ref("");
 const surname = ref("");
 const password = ref("");
 const message = ref("");
 const login = async () => {
   const payload = {
     username: username.value,
-    name: firstName.value,
+    name: name.value,
     surname: surname.value,
     password: password.value,
   };
@@ -33,7 +33,7 @@ const login = async () => {
   <h1>Signup</h1>
   <form @submit.prevent="login">
     <input type="text" v-model="username" placeholder="Username" required />
-    <input type="text" v-model="firstName" placeholder="First Name" required />
+    <input type="text" v-model="name" placeholder="First Name" required />
     <input type="text" v-model="surname" placeholder="Last Name" required />
     <input type="password" v-model="password" placeholder="Password" required />
     <button type="submit">Register</button>

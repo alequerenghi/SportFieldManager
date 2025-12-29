@@ -28,7 +28,6 @@ const verifyToken = (req, res, next) => {
       return res.status(403).json({ error: "Expired or invalid token" });
     }
     req.token = decoded;
-    console.log(req.token);
     next();
   });
 };
@@ -178,22 +177,22 @@ app.get("/api/fields", async (req, res) => {
 const TournamentSchema = z.object({
   name: z.string().min(3),
   sport: z.string(),
-  location: z.string(),
-  startDate: z.string().refine((d) => !isNaN(Date.parse(d))),
-  endDate: z.string().refine((d) => !isNaN(Date.parse(d))),
+  fieldId: z.string(),
+  startDate: z.string(),
   maxTeams: z.number().int().positive(),
 });
 
 const assertCreator = async (req, res, next) => {
   const { id } = req.params;
   const db = await getConnection();
-  const tournamentFound = db
+  const tournamentFound = await db
     .collection("tournaments")
     .findOne({ _id: new ObjectId(id) });
   if (!tournamentFound) {
     return res.status(404).send("Not found");
   }
-  if (tournamentFound.userId !== req.token._id) {
+  console.log(tournamentFound.userId, req.token._id);
+  if (tournamentFound.userId.toString() !== req.token._id) {
     return res.status(403).send("Forbidden");
   }
   next();
@@ -207,23 +206,27 @@ app.get("/api/tournaments", async (req, res) => {
   res.json(tournaments);
 });
 app.post("/api/tournaments", verifyToken, async (req, res) => {
+  console.log(req.body);
   const parsed = TournamentSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(304).send("Malformed package");
+    console.error(parsed.error.errors);
+    return res.status(400).json({ error: "Malformed package" });
   }
   const tournament = parsed.data;
+  console.log("there");
+  tournament.startDate = new Date(tournament.startDate);
+  console.log(tournament);
   if (tournament.startDate < Date.now()) {
-    res.status(403).send("Tournaments must start in the future");
+    return res
+      .status(403)
+      .json({ error: "Tournaments must start in the future" });
   } else {
     const db = await getConnection();
     const insertResult = await db
       .collection("tournaments")
       .insertOne({ ...tournament, userId: new ObjectId(req.token._id) });
-    if (!insertResult) {
-      res.status(500).send("Server error");
-    } else {
-      res.send("Tournament created successfully");
-    }
+    console.log("and there");
+    res.send(`Tournament created successfully`);
   }
 });
 app.get("/api/tournaments/:id", async (req, res) => {

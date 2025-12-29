@@ -7,6 +7,7 @@ const props = defineProps({
 const emit = defineEmits(["update-state"]);
 const username = ref(null);
 const authenticated = ref(false);
+const menu = ref(false);
 
 const whoami = async () => {
   try {
@@ -37,9 +38,14 @@ const logout = async () => {
   }
 };
 
-onMounted(() => {
-  whoami();
-});
+onMounted(() => whoami());
+
+// const handleClickOutside = () => {
+//   showSuggestions.value = false;
+// };
+
+// onMounted(() => document.addEventListener("click", handleClickOutside));
+// onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 </script>
 
 <template>
@@ -50,7 +56,12 @@ onMounted(() => {
     </div>
     <div v-else>
       <button @click.prevent="logout">Logout</button>
-      <button>{{ username }}</button>
+      <button @click.prevent="menu = true">
+        {{ username }}
+      </button>
+      <div v-if="menu">
+        <a @click="emit('update-state', 'new-tournament')">New tournament</a>
+      </div>
     </div>
   </nav>
 </template>
