@@ -5,6 +5,7 @@ import { compare, hash } from "bcrypt";
 const { sign } = jwt;
 
 const router = express.Router();
+
 router.post("/signin", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -17,12 +18,13 @@ router.post("/signin", async (req, res) => {
     if (!passwordMatch) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
-    // maybe modify in the future
-    const token = sign({ username }, process.env.JWT_SECRET, {
+
+    const { _id } = user;
+    const token = sign({ _id, username }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
     res.cookie("token", token, { httpOnly: true });
-    res.redirect("/api/fields?q=''");
+    res.send("Success");
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error" });
@@ -46,6 +48,13 @@ router.post("/signup", async (req, res) => {
     console.error(err);
     res.status(500).send(`Server error`);
   }
+});
+
+router.post("/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+  });
+  res.send("Logged out");
 });
 
 export default router;

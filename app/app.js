@@ -21,13 +21,14 @@ app.use(express.static("public"));
 const verifyToken = (req, res, next) => {
   const token = req.cookies?.token;
   if (typeof token === "undefined") {
-    return res.redirect("/api/auth/login");
+    return res.status(403).json({ error: "Please log in" });
   }
   verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(403).send("Expired or invalid token");
+      return res.status(403).json({ error: "Expired or invalid token" });
     }
     req.token = decoded;
+    console.log(req.token);
     next();
   });
 };
@@ -59,6 +60,15 @@ app.get(
       return res.status(403).send("Malformed date");
     }
   },
+  async (req, res, next) => {
+    const token = req.cookies?.token;
+    if (typeof token !== "undefined") {
+      verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        req.token = decoded;
+      });
+    }
+    next();
+  },
   async (req, res) => {
     const { id } = req.params;
     const date = req.date;
@@ -69,15 +79,22 @@ app.get(
     if (!field) {
       return res.status(404).send("Not found");
     }
-    const bookings = await db
+    const bookings = new Map();
+    const alreadyTaken = await db
       .collection("bookings")
       .find({ date, fieldId: id })
       .toArray();
-    const slots = field.slots
-      .map((i) => ({ slot: i }))
-      .map((i) =>
-        bookings.includes(i) ? (i.available = false) : (i.available = true)
-      );
+    alreadyTaken.forEach((b) => bookings.set(b.slot, b));
+    const slots = field.slots.map((i) => {
+      const booking = bookings.get(i);
+      return {
+        _id: booking?._id,
+        slot: i,
+        available: !booking,
+        me: req.token?._id === booking?.userId,
+      };
+    });
+    console.log(slots);
     res.json(slots);
   }
 );
@@ -99,22 +116,27 @@ app.post(
   },
   async (req, res) => {
     // verify date
-    const booking = req.body;
+    const { slot } = req.body;
     const { id } = req.params;
     const db = await getConnection();
-    const field = await db.collection("fields").findOne({ _id: id });
-    if (!field.slots.includes(booking.slot)) {
+    const field = await db
+      .collection("fields")
+      .findOne({ _id: new ObjectId(id) });
+    if (!field) {
+      return res.status(404).send("Not found");
+    }
+    if (!field.slots.includes(slot)) {
       return res.status(403).send("Forbidden");
     }
     const alreadyTaken = await db
       .collection("bookings")
-      .findOne({ date: req.date, slot: booking.slot });
+      .findOne({ fieldId: id, date: req.date, slot });
     if (alreadyTaken) {
       return res.status(403).send("Booking unavaialble");
     }
     const inserted = await db
       .collection("bookings")
-      .insertOne({ booking, userId: req.token._id });
+      .insertOne({ slot, date: req.date, userId: req.token._id, fieldId: id });
     res.json({ bookingId: inserted.insertedId });
   }
 );
@@ -126,14 +148,14 @@ app.delete(
     const db = await getConnection();
     const toDelete = await db
       .collection("bookings")
-      .findOne({ fieldId: new ObjectId(id), _id: new ObjectId(bookingId) });
+      .findOne({ fieldId: id, _id: new ObjectId(bookingId) });
     if (!toDelete) {
       return res.status(404).send("Not found");
     }
     if (toDelete.userId !== req.token._id) {
       return res.status(403).send("Forbidden");
     }
-    await db.collection("bookings").deleteOne({ id, bookingId });
+    await db.collection("bookings").deleteOne({ _id: new ObjectId(bookingId) });
     res.send("Booking deleted successfully");
   }
 );
@@ -356,6 +378,9 @@ app.get("/api/users/:id", async (req, res) => {
     .find({ userId: id })
     .toArray();
   res.send({ ...user, tournaments });
+});
+app.get("/api/whoami", verifyToken, (req, res) => {
+  res.json({ authenticated: true, ...req.token });
 });
 app.use((err, req, res, next) => {
   console.error(err);
