@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 
+const emit = defineEmits(["success"]);
 const username = ref("");
 const firstName = ref("");
 const surname = ref("");
@@ -22,6 +23,8 @@ const login = async () => {
     const data = await response.json();
     const { error } = data;
     message.value = error;
+  } else {
+    emit("success", "login");
   }
 };
 </script>

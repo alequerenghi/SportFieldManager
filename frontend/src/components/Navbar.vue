@@ -1,12 +1,12 @@
 <script setup>
-import { onMounted, onUpdated, ref } from "vue";
-import Login from "./auth/Login.vue";
-import Signup from "./auth/Signup.vue";
+import { onMounted, ref } from "vue";
 
+const props = defineProps({
+  state: String,
+});
+const emit = defineEmits(["update-state"]);
 const username = ref(null);
 const authenticated = ref(false);
-
-const pageState = ref("home");
 
 const whoami = async () => {
   try {
@@ -43,15 +43,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <Login v-if="pageState === 'login'" />
-  <Signup v-else-if="pageState === 'signup'" />
-  <nav v-else>
+  <nav>
     <div v-if="!authenticated">
-      <button @click="pageState = 'login'">Login</button>
-      <button @click="pageState = 'signup'">Signup</button>
+      <button @click.prevent="emit('update-state', 'login')">Login</button>
+      <button @click.prevent="emit('update-state', 'signup')">Signup</button>
     </div>
     <div v-else>
-      <button @click="logout">Logout</button>
+      <button @click.prevent="logout">Logout</button>
       <button>{{ username }}</button>
     </div>
   </nav>
