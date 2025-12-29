@@ -103,9 +103,11 @@ app.post(
   verifyToken,
   (req, res, next) => {
     try {
-      let { date } = req.body;
+      let { date, slot } = req.body;
       date = new Date(date);
-      if (date < Date.now()) {
+      const hour = slot.split(":")[0];
+      const today = new Date().toISOString().substring(0, 10);
+      if (date < today && hour < new Date().getHours()) {
         return res.status(403).send("Cannot book in the past");
       }
       req.date = new Date(date.toDateString());
