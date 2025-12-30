@@ -1,11 +1,12 @@
 <script setup>
 import { ref } from "vue";
-
-const emit = defineEmits(["success"]);
+import { useRouter } from "vue-router";
 
 const username = ref("");
 const password = ref("");
 const message = ref("");
+const router = useRouter();
+
 const login = async () => {
   const payload = { username: username.value, password: password.value };
   const response = await fetch("/api/auth/signin", {
@@ -19,7 +20,7 @@ const login = async () => {
     const { error } = data;
     message.value = error;
   } else {
-    emit("success", "main");
+    router.push("/");
   }
 };
 </script>
