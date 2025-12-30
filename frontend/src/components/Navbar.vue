@@ -1,7 +1,8 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { onMounted, onUnmounted, ref } from "vue";
 
-const emit = defineEmits(["update-state"]);
+const router = useRouter();
 
 const username = ref(null);
 const authenticated = ref(false);
@@ -38,27 +39,27 @@ const logout = async () => {
 
 onMounted(() => whoami());
 
-// const handleClickOutside = () => {
-//   showSuggestions.value = false;
-// };
+const handleClickOutside = () => {
+  menu.value = false;
+};
 
-// onMounted(() => document.addEventListener("click", handleClickOutside));
-// onUnmounted(() => document.removeEventListener("click", handleClickOutside));
+onMounted(() => document.addEventListener("click", handleClickOutside));
+onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 </script>
 
 <template>
   <nav>
     <div v-if="!authenticated">
-      <button @click.prevent="emit('update-state', 'login')">Login</button>
-      <button @click.prevent="emit('update-state', 'signup')">Signup</button>
+      <button @click="router.push('/login')">Login</button>
+      <button @click="router.push('/signup')">Signup</button>
     </div>
     <div v-else>
-      <button @click.prevent="logout">Logout</button>
-      <button @click.prevent="menu = true">
+      <button @click="logout">Logout</button>
+      <button @click="menu = true">
         {{ username }}
       </button>
       <div v-if="menu">
-        <a @click="emit('update-state', 'new-tournament')">New tournament</a>
+        <a @click="router.push('/tournaments/new')">New tournament</a>
       </div>
     </div>
   </nav>
