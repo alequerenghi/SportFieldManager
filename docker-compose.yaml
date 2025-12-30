@@ -11,6 +11,7 @@ services:
       - mongo
     environment:
       JWT_SECRET: miciomicio
+      # NODE_ENV: prod
 
   frontend:
     container_name: frontend
