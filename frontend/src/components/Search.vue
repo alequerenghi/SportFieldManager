@@ -3,12 +3,14 @@ import { ref, watch } from "vue";
 import Field from "./Field.vue";
 import { searchSingle } from "./utils.js";
 import Tournament from "./tournaments/Tournament.vue";
+import { useRouter } from "vue-router";
 
 const mainPage = ref("searching");
 const fields = ref([]);
 const tournaments = ref([]);
 const searchBar = ref(" ");
 let debounce = null;
+const router = useRouter();
 
 const search = async (val) => {
   try {
@@ -24,42 +26,20 @@ watch(searchBar, async (val) => {
   debounce = setTimeout(await search(val), 400);
 });
 
-let chosenField = null;
 const fieldDetails = async (fieldId) => {
   const response = await fetch(`/api/fields/${fieldId}`);
   if (!response.ok) {
     // TODO
   } else {
     const data = await response.json();
-    chosenField = data;
-    mainPage.value = "field";
-  }
-};
-
-let chosenTournament = null;
-const tournamentDetails = async (torunamentId) => {
-  const response = await fetch(`/api/tournaments/${torunamentId}`);
-  if (!response.ok) {
-  } else {
-    const data = await response.json();
-    chosenTournament = data;
-    mainPage.value = "tournament";
+    router.push(`/fields/${data._id}`);
   }
 };
 </script>
 
 <template>
   <input type="text" placeholder="Search" v-model="searchBar" />
-  <div v-if="mainPage === 'tournament'">
-    <Tournament
-      :tournament="chosenTournament"
-      @update-state="mainPage = $event"
-    />
-  </div>
-  <div v-else-if="mainPage === 'field'">
-    <Field :field="chosenField" />
-  </div>
-  <div v-else>
+  <div>
     <h2 v-if="fields.length">Fields</h2>
     <ul>
       <li v-for="field in fields">
@@ -69,9 +49,9 @@ const tournamentDetails = async (torunamentId) => {
     <h2 v-if="tournaments.length">Tournaments</h2>
     <ul>
       <li v-for="tournament in tournaments">
-        <a @click.prevent="tournamentDetails(tournament._id)">{{
+        <RouterLink :to="`/tournaments/${tournament._id}`">{{
           tournament.name
-        }}</a>
+        }}</RouterLink>
       </li>
     </ul>
   </div>
