@@ -4,7 +4,7 @@ const uri = "mongodb://mongo:27017/superMongo";
 let cachedDb = null;
 let mongoClient = null;
 
-export const getConnection = async () => {
+const getConnection = async () => {
   if (cachedDb) {
     console.log("Retrieved connection");
     return cachedDb;
@@ -21,6 +21,7 @@ export const getConnection = async () => {
   }
 };
 
+export default getConnection;
 // const closeConnection = async () => {
 //     try {
 //         if (!cachedDb) {

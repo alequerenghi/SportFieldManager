@@ -1,6 +1,6 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import { getConnection } from "./dbConnector.js";
+import getConnection from "./dbConnector.js";
 import { compare, hash } from "bcrypt";
 const { sign } = jwt;
 
