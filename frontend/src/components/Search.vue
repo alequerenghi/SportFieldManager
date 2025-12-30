@@ -49,7 +49,7 @@ const tournamentDetails = async (torunamentId) => {
 </script>
 
 <template>
-  <input type="text" v-model="searchBar" />
+  <input type="text" placeholder="Search" v-model="searchBar" />
   <div v-if="mainPage === 'tournament'">
     <Tournament
       :tournament="chosenTournament"
@@ -60,13 +60,13 @@ const tournamentDetails = async (torunamentId) => {
     <Field :field="chosenField" />
   </div>
   <div v-else>
-    <h2>Fields</h2>
+    <h2 v-if="fields.length">Fields</h2>
     <ul>
       <li v-for="field in fields">
         <a @click.prevent="fieldDetails(field._id)">{{ field.name }}</a>
       </li>
     </ul>
-    <h2>Tournaments</h2>
+    <h2 v-if="tournaments.length">Tournaments</h2>
     <ul>
       <li v-for="tournament in tournaments">
         <a @click.prevent="tournamentDetails(tournament._id)">{{

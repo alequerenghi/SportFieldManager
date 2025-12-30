@@ -1,10 +1,8 @@
 <script setup>
 import { onMounted, ref } from "vue";
 
-const props = defineProps({
-  state: String,
-});
 const emit = defineEmits(["update-state"]);
+
 const username = ref(null);
 const authenticated = ref(false);
 const menu = ref(false);

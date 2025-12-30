@@ -2,6 +2,8 @@
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { searchSingle } from "../utils";
 
+const emit = defineEmits(["update-state"]);
+
 const name = ref("");
 const maxTeams = ref(0);
 const chosenField = ref("");
@@ -48,12 +50,12 @@ const createTournament = async () => {
     credentials: "include",
   });
   if (!response.ok) {
-    const data = await response.json();
+    const data = await response.text();
     const { error } = data;
     message.value = error;
   } else {
-    const data = await response.text();
-    message.value = data;
+    message.value = await response.json();
+    emit("update-state", "main");
   }
 };
 

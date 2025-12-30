@@ -18,8 +18,8 @@ See:
 
 ## Field
 
-Anyone can navigate available sport fields.  
-View available time slots for a given date.
+~~Anyone can navigate available sport fields.  
+View available time slots for a given date.~~
 
 ```json
 {

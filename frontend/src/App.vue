@@ -26,8 +26,11 @@ onUpdated(pageState, () => console.log(pageState.value));
     <Login v-if="pageState === 'login'" @success="pageState = $event" />
     <Signup v-else-if="pageState === 'signup'" @success="pageState = $event" />
     <div v-else>
-      <Navbar :state="pageState" @update-state="pageState = $event" />
-      <NewTournament v-if="pageState === 'new-tournament'" />
+      <Navbar @update-state="pageState = $event" />
+      <NewTournament
+        v-if="pageState === 'new-tournament'"
+        @update-state="pageState = $event"
+      />
       <Search v-else />
     </div>
   </main>

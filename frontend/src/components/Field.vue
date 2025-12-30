@@ -18,7 +18,7 @@ watch(calendar, async (date) => {
     `/api/fields/${props.field._id}/slots?date=${date}`
   );
   if (!response.ok) {
-    message.value = await response.text();
+    message.value = await response.json();
   } else {
     message.value = "";
     const data = await response.json();
@@ -44,12 +44,11 @@ const makeBooking = async (slot) => {
     credentials: "include",
   });
   if (!response.ok) {
-    const err = await response.text();
+    const { err } = await response.json();
     message.value = err;
   } else {
-    const data = await response.json();
-    const { bookingId } = data;
-    message.value = `Booking successful: ${bookingId}`;
+    const { bookingId } = await response.json();
+    message.value = "";
     slot.me = true;
     slot.available = false;
     slot._id = bookingId;
@@ -64,11 +63,14 @@ const deleteBooking = async (slot) => {
       credentials: "include",
     }
   );
-  if (response.ok) {
+  if (!response.ok) {
+    const { error } = await response.json();
+    message.value = error;
+  } else {
     slot.available = true;
     slot.me = false;
     slot._id = null;
-    const data = await response.json();
+    const { message: data } = await response.json();
     message.value = data;
   }
 };
