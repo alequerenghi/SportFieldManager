@@ -1,6 +1,6 @@
 import express from "express";
-import { HttpError, normalizeDate, verifyToken } from "./utils.js";
-import getConnection from "./dbConnector.js";
+import { HttpError, normalizeDate, verifyToken } from "../utils.js";
+import getConnection from "../dbConnector.js";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 

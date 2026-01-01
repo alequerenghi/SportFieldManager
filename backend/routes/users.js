@@ -1,5 +1,5 @@
 import { Router } from "express";
-import getConnection from "./dbConnector.js";
+import getConnection from "../dbConnector.js";
 import { ObjectId } from "mongodb";
 
 const router = Router();

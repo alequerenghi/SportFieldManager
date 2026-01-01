@@ -6,9 +6,9 @@ import {
   normalizeDate,
   verifyToken,
   assertCreator,
-} from "./utils.js";
+} from "../utils.js";
 import { ObjectId } from "mongodb";
-import getConnection from "./dbConnector.js";
+import getConnection from "../dbConnector.js";
 
 const router = Router();
 
@@ -28,6 +28,117 @@ const TournamentUpdateSchema = z
   })
   .strict();
 
+const computeStandings = (sport, matches) => {
+  const pointsPerSport = {
+    football: [3, 1, 0],
+    baskteball: [2, 0, 0],
+    volleyball: [2, 0, 0],
+  };
+  const standings = matches.reduce((agg, match) => {
+    match.teams.forEach((team) => {
+      if (!agg[team]) {
+        agg[team] = { score: 0, matchesPlayed: 0, goals: [0, 0] };
+      }
+      agg[team].matchesPlayed++;
+    });
+    const [homeTeam, awayTeam] = match.teams;
+    const [victory, draw, lost] = pointsPerSport[sport];
+    if (match.score[0] > match.score[1]) {
+      agg[homeTeam].score += victory;
+      agg[awayTeam].score += lost;
+    } else if (match.score[0] < match.score[1]) {
+      agg[homeTeam].score += lost;
+      agg[awayTeam].score += victory;
+    } else {
+      agg[homeTeam].score += draw;
+      agg[awayTeam].score += draw;
+    }
+    for (let i = 0; i < 2; i++) {
+      agg[homeTeam].goals[i] += match.score[i];
+      agg[awayTeam].goals[1 - i] += match.score[i];
+    }
+    return agg;
+  }, {});
+  return Object.entries(standings).sort(
+    (a, b) =>
+      b.score - a.score || b.goals[0] - a.goals[0] || a.goals[1] - b.goals[1]
+  );
+};
+
+const computeTennisStandings = (matches) => {
+  const standings = {};
+
+  for (const match of matches) {
+    const [teamA, teamB] = match.teams;
+
+    if (!standings[teamA]) {
+      standings[teamA] = initTeam();
+    }
+    if (!standings[teamB]) {
+      standings[teamB] = initTeam();
+    }
+
+    standings[teamA].matchesPlayed++;
+    standings[teamB].matchesPlayed++;
+
+    let setsA = 0;
+    let setsB = 0;
+
+    for (const [gamesA, gamesB] of match.score) {
+      standings[teamA].gamesWon += gamesA;
+      standings[teamA].gamesLost += gamesB;
+      standings[teamB].gamesWon += gamesB;
+      standings[teamB].gamesLost += gamesA;
+
+      if (gamesA > gamesB) {
+        setsA++;
+      } else {
+        setsB++;
+      }
+    }
+
+    standings[teamA].setsWon += setsA;
+    standings[teamA].setsLost += setsB;
+    standings[teamB].setsWon += setsB;
+    standings[teamB].setsLost += setsA;
+
+    if (setsA > setsB) {
+      standings[teamA].matchesWon++;
+      standings[teamA].points += 1;
+      standings[teamB].matchesLost++;
+    } else {
+      standings[teamB].matchesWon++;
+      standings[teamB].points += 1;
+      standings[teamA].matchesLost++;
+    }
+  }
+  return Object.entries(standings)
+    .map(([team, stats]) => ({
+      team,
+      ...stats,
+      setDiff: stats.setsWon - stats.setsLost,
+      gameDiff: stats.gamesWon - stats.gamesLost,
+    }))
+    .sort(
+      (a, b) =>
+        b.points - a.points ||
+        b.matchesWon - a.matchesWon ||
+        b.setDiff - a.setDiff ||
+        b.gameDiff - a.gameDiff
+    );
+};
+
+const initTeam = () => ({
+  matchesPlayed: 0,
+  matchesWon: 0,
+  matchesLost: 0,
+  setsWon: 0,
+  setsLost: 0,
+  gamesWon: 0,
+  gamesLost: 0,
+  points: 0,
+});
+
 router.post("/", verifyToken, async (req, res, next) => {
   try {
     const parsed = TournamentSchema.safeParse(req.body);
@@ -40,13 +151,16 @@ router.post("/", verifyToken, async (req, res, next) => {
       throw new HttpError(403, "Cannot create tournament in the past");
     }
     const db = await getConnection();
-    await db.collection("tournaments").insertOne({
+    const inserted = await db.collection("tournaments").insertOne({
       ...tournament,
       startDate,
       userId: new ObjectId(req.token._id),
       teams: [],
     });
-    res.json({ mesasge: `Tournament created successfully` });
+    if (!inserted.acknowleged) {
+      throw new HttpError(500);
+    }
+    res.json(inserted.insertedId);
   } catch (error) {
     next(error);
   }
@@ -182,13 +296,11 @@ router.get("/:id/standings", async (req, res, next) => {
       .collection("matches")
       .find({ tournamentId: id, status: "completed" })
       .toArray();
-    const standings = tournament.teams.map((t) => ({ team: t, score: 0 }));
-    matches.forEach((m) => {
-      const [home, away] = m.teams;
-      standings.find((s) => s.team === home).score += m.score.result[0];
-      standings.find((s) => s.team === away).score += m.score.result[1];
-    });
-    standings.sort((a, b) => b.score - a.score);
+
+    const standings =
+      tournament.sport === "tennis"
+        ? computeTennisStandings(matches)
+        : computeStandings(tournament.sport, matches);
     res.json(standings);
   } catch (error) {
     next(error);
