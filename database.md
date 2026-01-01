@@ -1,18 +1,38 @@
-# Structure
+allow registered users to:
+- search for fields, tournaments, teams and players;
+- create tournaments associated with a specific sport;
+- add teams and players to tournaments;
+
+● Tournament creation: authenticated users may create a tournament specifying:
+○ name
+○ sport (football, volleyball, basketball)
+○ maximum number of teams
+○ start date
+
+● Team creation: the tournament’s creator can add teams by specifying a team name.
+● Player management: teams can contain multiple players, each with:
+○ name
+○ surname
+○ optional jersey number
+
+● Search: partial, case-insensitive search should be available for fields, tournaments,
+teams, players (eg, searching "cal" should match “Calcio”, “Calisthenics Arena”,
+“California Team”, etc.);
+● User list: it is possible to view a list of users, optionally filtered by a search
+parameter. For each user, all tournaments created by them will be shown.
 
 ## Users
 
 Possible to view a list of users filtered by a search parameter.
 See:
-
 - tournaments created by them
 
-```json
+```js
 {
-  "username": "aleq",
-  "name": "Alessandro",
-  "surname": "Querenghi",
-  "password": "secret"
+  username: String,
+  name: String,
+  surname: String,
+  password: String
 }
 ```
 
@@ -21,13 +41,12 @@ See:
 ~~Anyone can navigate available sport fields.  
 View available time slots for a given date.~~
 
-```json
+```js
 {
-  "_id": "ObjectId",
-  "name": "City Sports Arena",
-  "sport": "football",
-  "location": "Downtown",
-  "slots": ["8:00", "9:00"]
+  name: String,
+  sport: String,
+  location: String,
+  slots: Array(String)
 }
 ```
 
@@ -38,13 +57,10 @@ Users may cancel upcoming bookings
 
 ```json
 {
-  "_id": "ObjectId",
   "fieldId": "ObjectId",
   "userId": "ObjectId",
-  "date": "2025-01-10",
-  "slot": "18:00",
-
-  "createdAt": "Date"
+  "date": "Date",
+  "slot": "String",
 }
 ```
 
@@ -54,24 +70,21 @@ View all tournaments, either active or completed with support for search queries
 Details include general information, teams matches and standings.  
 View teams and players for each tournament.  
 Creator may:
-
 - edit certain fields (name, max teams)
 - may delete tournament
 - add teams by specifying name.
 
 Authenticated users may create a tournament with:
 
-```json
+```js
 {
-  "_id": 34,
-  "name": "ufc",
-  "sport": "lotta libera",
-  "maximum_teams": 3,
-  "fieldId": 4,
-  "creatorId": 4,
-  "start_date": "2026-01-88",
-  "teams": [],
-  "schedule": {}
+  name: String,
+  sport: String,
+  maximum_teams: Number,
+  fieldId: ObjectId,
+  creatorId: ObjectId,
+  startDate: Date,
+  teams: Array(ObjectId)
 }
 ```
 
@@ -82,40 +95,36 @@ Schedule is a collection of matches.
 
 Multiple players, each with:
 
-```json
+```js
 {
-  "name": "aleq",
-  "surname": "querenghi",
-  "jersey_n": 12
+  name: String,
+  surname: String,
+  jerseyNumber: Number,
 }
 ```
 
 Team:
 
-```json
+```js
 {
-  "team_ID": 1,
-  "name": "quaglie",
-  "players": [],
-  "sport": "lotta armata"
+  name: String,
+  players: Array(ObjectId),
 }
 ```
 
 ## Match
 
-```json
+```js
 {
-  "_id": 1,
-  "tournamentId":45,
-  "teams": [],
-  "date": "2025-12-20",
-  "optional_field": null,
-  "status": "upcoming"  "completed",
-  "result": null
+  tournamentId: ObjectId,
+  teams: [ObjectId, ObjectId],
+  date: Date,
+  status: "upcoming" | "completed",
+  result: Object,
 }
 ```
 
-Results: creator final score once date has passed
+Results: creator final score once date has passed:
 
 ## Search
 
@@ -126,12 +135,11 @@ Partial case-insensitive search for fields, tournaments, teams, players (cal ret
 Standings are computed automatically (depending on sport). Public.  
 Match results
 
-```json
+```js
 {
-  "score": 4,
-  "mathcesPlayed": 2,
-  "goals": [2, 3],
-  "pointsDifference": -1
+  score: Number,
+  matchesPlayed: number,
+  goals: [scored, conceded]
 }
 ```
 

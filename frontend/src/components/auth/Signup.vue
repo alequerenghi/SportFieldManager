@@ -1,12 +1,14 @@
 <script setup>
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 
-const emit = defineEmits(["success"]);
 const username = ref("");
 const name = ref("");
 const surname = ref("");
 const password = ref("");
 const message = ref("");
+const router = useRouter();
+
 const login = async () => {
   const payload = {
     username: username.value,
@@ -24,7 +26,7 @@ const login = async () => {
     const { error } = data;
     message.value = error;
   } else {
-    emit("success", "login");
+    router.push("/signin");
   }
 };
 </script>
