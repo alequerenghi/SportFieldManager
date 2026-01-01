@@ -1,7 +1,6 @@
 <script setup>
-import { onMounted, ref, watch } from "vue";
-import Schedule from "./Schedule.vue";
-import { useRoute, useRouter } from "vue-router";
+import { onMounted, ref } from "vue";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 
 const router = useRouter();
 const route = useRoute();
@@ -13,7 +12,6 @@ const modifying = ref("no");
 const newTeam = ref("");
 const newMaxTeams = ref(0);
 const newTeamName = ref("");
-const showSchedule = ref(false);
 const tournament = ref(null);
 
 const deleteTournament = async () => {
@@ -67,7 +65,9 @@ const generate = async () => {
     // const { error } = await response.json();
     pMessage.value = await response.text();
   }
+  router.push(`/tournament/${route.params.id}/schedule`);
 };
+
 const loadTournament = async () => {
   const response = await fetch(`/api/tournaments/${route.params.id}`, {
     credentials: "include",
@@ -79,6 +79,7 @@ const addTeam = () => {
   tournament.value.teams.push(newTeam.value);
   newTeam.value = "";
 };
+
 onMounted(async () => {
   await loadTournament();
   const { fieldId, maxTeams, userId } = tournament.value;
@@ -103,12 +104,9 @@ onMounted(async () => {
 <template>
   <div v-if="tournament">
     <h1>{{ tournament.name }}</h1>
-    <div v-if="showSchedule">
-      <Schedule :tournamentId="route.params.id" />
-    </div>
-    <div v-else>
+    <div>
       <ul>
-        <li>Field: {{ tournament.sport }}</li>
+        <li>Sport: {{ tournament.sport }}</li>
         <li>Max teams: {{ tournament.maxTeams }}</li>
         <li>Field: {{ field.name }}</li>
         <li>Location: {{ field.location }}</li>
@@ -117,11 +115,15 @@ onMounted(async () => {
         <li>Teams:</li>
         <ul>
           <li v-for="team in tournament.teams">
-            <a>{{ team }}</a>
+            <RouterLink :to="`/team/${team._id}`">{{ team }}</RouterLink>
           </li>
         </ul>
         <li v-if="tournament.schedule">
-          <a @click="showSchedule = true">Schedule</a>
+          <RouterLink
+            :to="`/tournaments${route.params.id}/schedule`"
+            :tournament="tournament"
+            >Schedule</RouterLink
+          >
         </li>
         <form
           v-if="modifying === 'teams'"
@@ -154,6 +156,13 @@ onMounted(async () => {
         <button @click.prevent="deleteTournament">Delete</button>
         <button @click="generate" v-if="!tournament.schedule">Generate</button>
       </div>
+      <button
+        @click="router.push(`/tournaments/${route.params.id}/standings`)"
+        :tournamentId="route.params.id"
+        :sport="tournament.sport"
+      >
+        Go to standings
+      </button>
       <p>{{ pMessage }}</p>
     </div>
   </div>

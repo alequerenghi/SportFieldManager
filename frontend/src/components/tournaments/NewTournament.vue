@@ -1,9 +1,9 @@
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { searchSingle } from "../utils";
+import { useRouter } from "vue-router";
 
-const emit = defineEmits(["update-state"]);
-
+const router = useRouter();
 const name = ref("");
 const maxTeams = ref(0);
 const chosenField = ref("");
@@ -54,8 +54,8 @@ const createTournament = async () => {
     const { error } = data;
     message.value = error;
   } else {
-    message.value = await response.json();
-    emit("update-state", "main");
+    const data = await response.json();
+    router.push(`/tournaments/${data}`);
   }
 };
 
