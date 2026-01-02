@@ -24,9 +24,7 @@ router.get("/:id/slots", verifyTokenNotRequired, async (req, res, next) => {
     const { id } = req.params;
     const { date } = req.query;
     if (!date) {
-      const err = new Error("Missing date");
-      err.status = 400;
-      throw err;
+      throw new HttpError(400, "Missing date");
     }
     const normalizedDate = normalizeDate(date);
     const db = await getConnection();
@@ -34,9 +32,7 @@ router.get("/:id/slots", verifyTokenNotRequired, async (req, res, next) => {
       .collection("fields")
       .findOne({ _id: new ObjectId(id) });
     if (!field) {
-      const err = new Error();
-      err.status = 404;
-      throw err;
+      throw new HttpError(404);
     }
     const bookings = await db
       .collection("bookings")
@@ -93,19 +89,20 @@ router.post("/:id/bookings", verifyToken, async (req, res, next) => {
     if (!field.slots.includes(slot)) {
       throw new HttpError(403);
     }
-    const alreadyTaken = await db
-      .collection("bookings")
-      .findOne({ fieldId: new ObjectId(id), date: normalizedDate, slot });
-    if (alreadyTaken) {
-      throw new HttpError(403, "Booking unavailable");
+    try {
+      const result = await db.collection("bookings").insertOne({
+        slot,
+        date: normalizedDate,
+        userId: new ObjectId(req.token._id),
+        fieldId: new ObjectId(id),
+      });
+      res.status(201).json({ id: result.insertedId });
+    } catch (err) {
+      if (err.code === 11000) {
+        throw new HttpError(403, "Booking unavailable");
+      }
+      throw err;
     }
-    const result = await db.collection("bookings").insertOne({
-      slot,
-      date: normalizedDate,
-      userId: new ObjectId(req.token._id),
-      fieldId: new ObjectId(id),
-    });
-    res.json({ bookingId: result.insertedId });
   } catch (err) {
     next(err);
   }
@@ -129,7 +126,7 @@ router.delete(
       await db
         .collection("bookings")
         .deleteOne({ _id: new ObjectId(bookingId) });
-      res.json({ message: "Booking deleted successfully" });
+      res.sendStatus(204);
     } catch (error) {
       next(error);
     }

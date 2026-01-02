@@ -15,8 +15,7 @@ const router = Router();
 const TournamentSchema = z.object({
   name: z.string().min(3),
   sport: z.string(),
-  fieldId: z.string(),
-  startDate: z.string(),
+  startDate: z.string().refine((d) => !isNaN(Date.parse(d))),
   maxTeams: z.number().int().positive(),
 });
 
@@ -31,8 +30,7 @@ const TournamentUpdateSchema = z
 const computeStandings = (sport, matches) => {
   const pointsPerSport = {
     football: [3, 1, 0],
-    baskteball: [2, 0, 0],
-    volleyball: [2, 0, 0],
+    rest: [2, 0, 0],
   };
   const standings = matches.reduce((agg, match) => {
     match.teams.forEach((team) => {
@@ -42,7 +40,8 @@ const computeStandings = (sport, matches) => {
       agg[team].matchesPlayed++;
     });
     const [homeTeam, awayTeam] = match.teams;
-    const [victory, draw, lost] = pointsPerSport[sport];
+    const [victory, draw, lost] =
+      pointsPerSport[sport === "football" ? "football" : "rest"];
     if (match.score[0] > match.score[1]) {
       agg[homeTeam].score += victory;
       agg[awayTeam].score += lost;
@@ -84,7 +83,7 @@ const computeTennisStandings = (matches) => {
     let setsA = 0;
     let setsB = 0;
 
-    for (const [gamesA, gamesB] of match.score) {
+    for (const [gamesA, gamesB] of match.result) {
       standings[teamA].gamesWon += gamesA;
       standings[teamA].gamesLost += gamesB;
       standings[teamB].gamesWon += gamesB;
@@ -157,10 +156,10 @@ router.post("/", verifyToken, async (req, res, next) => {
       userId: new ObjectId(req.token._id),
       teams: [],
     });
-    if (!inserted.acknowleged) {
+    if (!inserted.acknowledged) {
       throw new HttpError(500);
     }
-    res.json(inserted.insertedId);
+    res.status(201).json({ id: inserted.insertedId });
   } catch (error) {
     next(error);
   }
@@ -174,6 +173,12 @@ router.get("/:id", async (req, res, next) => {
       .findOne({ _id: new ObjectId(id) });
     if (!tournament) {
       throw new HttpError(404);
+    }
+    if (tournament.teams.length) {
+      tournament.teams = await db
+        .collection("teams")
+        .find({ _id: { $in: tournament.teams } })
+        .toArray();
     }
     res.json(tournament);
   } catch (error) {
@@ -189,15 +194,23 @@ router.put("/:id", verifyToken, assertCreator, async (req, res, next) => {
     const update = parsed.data;
     const { id } = req.params;
     const db = await getConnection();
-    const tournament = await db
-      .collection("tournaments")
-      .findOne({ _id: new ObjectId(id) });
-    if (!tournament) {
-      throw new HttpError(404);
+    const tournament = req.tournament;
+    if (update.teams) {
+      if (update.teams.length > tournament.maxTeams) {
+        throw new HttpError(403, "Too many teams");
+      }
+      const teams = [...new Set(update.teams)];
+      const teamIds = teams.map((t) => new ObjectId(t));
+      const foundTeams = await db
+        .collection("teams")
+        .find({ _id: { $in: teamIds } })
+        .toArray();
+      if (foundTeams.length !== teamIds.length) {
+        throw new HttpError(404, "One or more teams don't exist");
+      }
+      update.teams = teamIds;
     }
-    if (update.teams?.length > tournament.maxTeams) {
-      throw new HttpError(403, "Too many teams");
-    }
+
     const result = await db
       .collection("tournaments")
       .updateOne({ _id: new ObjectId(id) }, { $set: update });
@@ -205,7 +218,7 @@ router.put("/:id", verifyToken, assertCreator, async (req, res, next) => {
       console.log(result);
       throw new HttpError(500);
     }
-    res.json({ message: "Updated successfully" });
+    res.sendStatus(200);
   } catch (error) {
     next(error);
   }
@@ -218,7 +231,7 @@ router.delete("/:id", verifyToken, assertCreator, async (req, res, next) => {
     await db.collection("tournaments").deleteOne({ _id: id });
     await db.collection("matches").deleteMany({ tournamentId: id });
 
-    res.status(204).end();
+    res.sendStatus(204);
   } catch (error) {
     next(error);
   }
@@ -261,7 +274,7 @@ router.post(
           { _id: new ObjectId(tournament._id) },
           { $set: { schedule: true } }
         );
-      res.json(matches);
+      res.sendStatus(201);
     } catch (error) {
       next(error);
     }

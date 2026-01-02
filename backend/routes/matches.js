@@ -18,7 +18,7 @@ const validateTennisScore = (score) => {
   }
   let setsWonHome = 0;
   let setsWonAway = 0;
-  score.foreach((set) => {
+  for (const set of score) {
     if (!validateSimpleScore(set)) {
       return false;
     }
@@ -28,18 +28,23 @@ const validateTennisScore = (score) => {
     } else if (gamesHome < gamesAway) {
       setsWonAway++;
     }
-  });
+  }
   return setsWonHome !== setsWonAway;
 };
 
 router.get("/:id", async (req, res, next) => {
   try {
-    const id = new ObjectId(req.params);
+    const id = new ObjectId(req.params.id);
     const db = await getConnection();
     const match = await db.collection("matches").findOne({ _id: id });
     if (!match) {
       throw new HttpError(404);
     }
+    const teamIds = match.teams.map((t) => new ObjectId(t));
+    match.teams = await db
+      .collection("teams")
+      .find({ _id: { $in: teamIds } })
+      .toArray();
     res.json(match);
   } catch (error) {
     next(error);
@@ -48,6 +53,7 @@ router.get("/:id", async (req, res, next) => {
 router.put(
   "/:id/result",
   verifyToken,
+  // TODO devi verificare che chi ha creato il torneo sia quello autenticato
   assertCreator,
   async (req, res, next) => {
     try {
@@ -61,16 +67,16 @@ router.put(
         throw new HttpError(400, "Malformed package");
       }
       const db = await getConnection();
-      const updateResult = db
+      const updateResult = await db
         .collection("matches")
         .updateOne(
           { _id: new ObjectId(id) },
           { $set: { score: result, status: "completed" } }
         );
       if (updateResult.acknowledged) {
-        res.send("Match score added successfully");
+        res.sendStatus(200);
       } else {
-        res.status(500).send("Server error");
+        throw new HttpError(500);
       }
     } catch (error) {
       next(error);
