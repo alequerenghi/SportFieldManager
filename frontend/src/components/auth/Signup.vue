@@ -6,7 +6,7 @@ const username = ref("");
 const name = ref("");
 const surname = ref("");
 const password = ref("");
-const message = ref("");
+const errorMessage = ref("");
 const router = useRouter();
 
 const login = async () => {
@@ -22,9 +22,7 @@ const login = async () => {
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    const data = await response.json();
-    const { error } = data;
-    message.value = error;
+    errorMessage.value = await response.text();
   } else {
     router.push("/signin");
   }
@@ -40,5 +38,5 @@ const login = async () => {
     <input type="password" v-model="password" placeholder="Password" required />
     <button type="submit">Register</button>
   </form>
-  <p>{{ message }}</p>
+  <p>{{ errorMessage }}</p>
 </template>
