@@ -1,65 +1,52 @@
 <script setup>
-import { useRouter } from "vue-router";
+import { RouterLink, useRouter } from "vue-router";
 import { onMounted, onUnmounted, ref } from "vue";
+import { auth } from "@/stores/auth";
 
 const router = useRouter();
 
-const username = ref(null);
-const authenticated = ref(false);
 const menu = ref(false);
-
-const whoami = async () => {
-  try {
-    const response = await fetch("/api/whoami", { credentials: "include" });
-    if (response.ok) {
-      const data = await response.json();
-      username.value = data.username;
-      authenticated.value = true;
-    } else {
-      authenticated.value = false;
-    }
-  } catch (err) {
-    authenticated.value = false;
-  }
-};
+const menuRef = ref(null);
 
 const logout = async () => {
-  try {
-    const response = await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-    if (response.ok) {
-      authenticated.value = false;
-    }
-  } catch (err) {
-    authenticated.value = false;
+  const response = await fetch("/api/auth/logout", {
+    method: "POST",
+    credentials: "include",
+  });
+  if (response.ok) {
+    auth.authenticated = false;
+    auth.username = null;
   }
 };
 
-onMounted(() => whoami());
-
-const handleClickOutside = () => {
-  menu.value = false;
+const handleClickOutside = (event) => {
+  if (menuRef.value && !menuRef.value.contains(event.target)) {
+    menu.value = false;
+  }
 };
 
-onMounted(() => document.addEventListener("click", handleClickOutside));
+onMounted(async () => {
+  await auth.fetchUser();
+  document.addEventListener("click", handleClickOutside);
+});
 onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 </script>
 
 <template>
   <nav>
-    <div v-if="!authenticated">
+    <div v-if="!auth.authenticated">
       <button @click="router.push('/login')">Login</button>
       <button @click="router.push('/signup')">Signup</button>
     </div>
     <div v-else>
       <button @click="logout">Logout</button>
-      <button @click="menu = true">
+      <button @click.stop="menu = !menu">
         {{ username }}
       </button>
-      <div v-if="menu">
-        <a @click="router.push('/tournaments/new')">New tournament</a>
+      <div v-if="menu" ref="menuRef">
+        <RouterLink to="/tournaments/new">New tournament</RouterLink>
+        <RouterLink to="/team/new">New team</RouterLink>
+        <RouterLink to="/users">Users</RouterLink>
       </div>
     </div>
   </nav>

@@ -1,9 +1,10 @@
 <script setup>
-import { ErrorCodes, onMounted, ref } from "vue";
+import { auth } from "@/stores/auth";
+import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
-const creator = ref(false);
+const creator = computed(() => auth._id === team.value.creatorId);
 const adding = ref(false);
 const name = ref("");
 const surname = ref("");
@@ -44,13 +45,7 @@ const loadTeam = async () => {
 
 onMounted(async () => {
   await loadTeam();
-  const whoami = await fetch("/api/whoami", { credentials: "include" });
-  if (whoami.ok) {
-    const { _id } = await whoami.json();
-    if (_id === team.value.creatorId) {
-      creator.value = true;
-    }
-  }
+  await auth.fetchUser();
 });
 </script>
 

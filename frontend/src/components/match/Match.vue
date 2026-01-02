@@ -1,8 +1,9 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import Tennis from "./Tennis.vue";
 import SportResult from "./SportResult.vue";
+import { auth } from "@/stores/auth";
 
 const props = defineProps({
   tournament: { type: Object, required: true },
@@ -11,10 +12,12 @@ const props = defineProps({
 const route = useRoute();
 const match = ref(null);
 const canAddResults = ref(false);
-const creator = ref(false);
+const creator = computed(() => props.tournament.userId === auth._id);
 const adding = ref(false);
+const errorMessage = ref("");
 
 const updateResult = async (data) => {
+  errorMessage.value = "";
   data.sport = props.tournament.sport;
   const response = await fetch(`/api/matches/${route.params.id}/result`, {
     method: "PUT",
@@ -23,13 +26,14 @@ const updateResult = async (data) => {
     credentials: "include",
   });
   if (!response.ok) {
-    // TODO
+    errorMessage.value = await response.text();
   } else {
     await loadMatch();
   }
 };
 
 const loadMatch = async () => {
+  errorMessage.value = "";
   const matchResponse = await fetch(`/api/matches/${route.params.id}`);
   match.value = await matchResponse.json();
   canAddResults.value =
@@ -40,13 +44,7 @@ const loadMatch = async () => {
 
 onMounted(async () => {
   await loadMatch();
-  const response = await fetch("/api/whoami", { credentials: "include" });
-  if (!response.ok) {
-    // TODO boh
-  } else {
-    const data = await response.json();
-    creator.value = data._id === props.tournament.userId;
-  }
+  await auth.fetchUser();
 });
 </script>
 
@@ -64,5 +62,6 @@ onMounted(async () => {
         <SportResult v-else @update="updateResult" />
       </div>
     </ul>
+    <p>{{ errorMessage }}</p>
   </div>
 </template>

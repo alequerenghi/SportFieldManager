@@ -1,4 +1,5 @@
 <script setup>
+import { auth } from "@/stores/auth";
 import { onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
@@ -7,7 +8,6 @@ const calendar = ref("");
 const slots = ref([]);
 const route = useRoute();
 const field = ref(null);
-const authenticated = ref(false);
 
 const makeBooking = async (slot) => {
   errorMessage.value = "";
@@ -63,12 +63,7 @@ onMounted(async () => {
   calendar.value = new Date().toISOString().substring(0, 10);
   const response = await fetch(`/api/fields/${route.params.id}`);
   field.value = await response.json();
-  const whoami = await fetch("/api/whoami", {
-    credentials: "include",
-  });
-  if (whoami.ok) {
-    authenticated.value = true;
-  }
+  await auth.fetchUser();
 });
 </script>
 
@@ -85,7 +80,7 @@ onMounted(async () => {
       <form>
         <input type="date" v-model="calendar" />
       </form>
-      <ul v-if="authenticated">
+      <ul v-if="auth.authenticated">
         <li v-for="slot in slots" :key="slot.slot">
           <button @click="makeBooking(slot)" :disabled="!slot.available">
             {{ slot.slot }}

@@ -1,12 +1,13 @@
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { searchSingle } from "../utils";
+import { auth } from "@/stores/auth";
 
 const router = useRouter();
 const route = useRoute();
-const creator = ref(null);
-const userLogged = ref(false);
+const isCreator = computed(() => auth._id === tournament.value.creatorId);
+const creatorData = ref(null);
 const errorMessage = ref("");
 const modifying = ref("no");
 const newTeam = ref("");
@@ -23,8 +24,7 @@ const deleteTournament = async () => {
     credentials: "include",
   });
   if (!response.ok) {
-    const data = await response.json();
-    console.error(data.error);
+    errorMessage.value = await response.text();
   }
   router.push("/");
 };
@@ -63,7 +63,6 @@ const generate = async () => {
     }
   );
   if (!response.ok) {
-    // const { error } = await response.json();
     errorMessage.value = await response.text();
   }
   router.push(`/tournament/${route.params.id}/schedule`);
@@ -99,17 +98,10 @@ onMounted(async () => {
   await loadTournament();
   const { maxTeams, userId } = tournament.value;
   newMaxTeams.value = maxTeams;
+  await auth.fetchUser();
 
   const creatorResponse = await fetch(`/api/users/${userId}`);
-  creator.value = await creatorResponse.json();
-  const whoami = await fetch("/api/whoami", { credentials: "include" });
-  if (whoami.ok) {
-    const user = await whoami.json();
-    const { _id } = user;
-    if (_id === userId) {
-      userLogged.value = true;
-    }
-  }
+  creatorData.value = await creatorResponse.json();
 });
 
 const handleClickOutside = () => (showSuggestions.value = false);
@@ -127,8 +119,8 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
         <li>Max teams: {{ tournament.maxTeams }}</li>
         <li>
           Created by:
-          <RouterLink :to="`/users/${creator._id}`">
-            {{ creator.username }}</RouterLink
+          <RouterLink :to="`/users/${creatorData._id}`">
+            {{ creatorData.username }}</RouterLink
           >
         </li>
         <li>Start date: {{ new Date(tournament.startDate).toDateString() }}</li>
@@ -178,7 +170,7 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
           <input type="submit" value="Send data" />
         </form>
       </ul>
-      <div v-if="userLogged">
+      <div v-if="isCreator">
         <button @click="modifying = 'info'">Edit info</button>
         <button @click="modifying = 'teams'">Add team</button>
         <button @click.prevent="deleteTournament">Delete</button>
