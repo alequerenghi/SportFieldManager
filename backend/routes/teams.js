@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { object, z } from "zod";
-import { HttpError, verifyToken } from "../utils";
-import getConnection from "../dbConnector";
+import { HttpError, verifyToken } from "../utils.js";
+import getConnection from "../dbConnector.js";
 import { ObjectId } from "mongodb";
 
 const router = Router();
