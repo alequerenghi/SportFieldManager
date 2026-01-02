@@ -60,7 +60,9 @@ const computeStandings = (sport, matches) => {
   }, {});
   return Object.entries(standings).sort(
     (a, b) =>
-      b.score - a.score || b.goals[0] - a.goals[0] || a.goals[1] - b.goals[1]
+      b[1].score - a[1].score ||
+      b[1].goals[0] - a[1].goals[0] ||
+      a[1].goals[1] - b[1].goals[1]
   );
 };
 
@@ -111,20 +113,13 @@ const computeTennisStandings = (matches) => {
       standings[teamA].matchesLost++;
     }
   }
-  return Object.entries(standings)
-    .map(([team, stats]) => ({
-      team,
-      ...stats,
-      setDiff: stats.setsWon - stats.setsLost,
-      gameDiff: stats.gamesWon - stats.gamesLost,
-    }))
-    .sort(
-      (a, b) =>
-        b.points - a.points ||
-        b.matchesWon - a.matchesWon ||
-        b.setDiff - a.setDiff ||
-        b.gameDiff - a.gameDiff
-    );
+  return Object.entries(standings).sort(
+    (a, b) =>
+      b[1].points - a[1].points ||
+      b[1].matchesWon - a[1].matchesWon ||
+      b[1].setsWon - b[1].setsLost - (a[1].setsWon - a[1].setsLost) ||
+      b[1].gamesWon - b[1].gamesLost - (a[1].gamesWon - a[1].gamesLost)
+  );
 };
 
 const initTeam = () => ({
@@ -309,11 +304,17 @@ router.get("/:id/standings", async (req, res, next) => {
       .collection("matches")
       .find({ tournamentId: id, status: "completed" })
       .toArray();
-
     const standings =
       tournament.sport === "tennis"
         ? computeTennisStandings(matches)
         : computeStandings(tournament.sport, matches);
+    const teamIds = tournament.teams.map((t) => new ObjectId(t));
+    const teams = await db
+      .collection("teams")
+      .find({ _id: { $in: teamIds } })
+      .toArray();
+    const teamMap = new Map(teams.map((t) => [t._id.toString(), t.name]));
+    standings.forEach((s) => (s[0] = teamMap.get(s[0])));
     res.json(standings);
   } catch (error) {
     next(error);
