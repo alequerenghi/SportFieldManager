@@ -7,12 +7,13 @@ const props = defineProps({
 });
 
 const route = useRoute();
-const rounds = ref({});
+const rounds = ref([]);
+const errorMessage = ref("");
 
 onMounted(async () => {
   const response = await fetch(`/api/tournaments/${route.params.id}/matches`);
   if (!response.ok) {
-    await response.text();
+    errorMessage.value = await response.text();
   } else {
     rounds.value = await response.json();
   }
@@ -23,11 +24,12 @@ onMounted(async () => {
   <div v-for="round in rounds" :key="round.round">
     <h3>Round {{ round.round + 1 }}</h3>
     <ul>
-      <li v-for="match in round.matches">
+      <li v-for="match in round.matches" :key="match._id">
         <RouterLink :to="`/matches/${match._id}`" :tournament="tournament"
           >{{ match.teams[0] }} vs. {{ match.teams[1] }}</RouterLink
         >
       </li>
     </ul>
+    <p>{{ errorMessage }}</p>
   </div>
 </template>
