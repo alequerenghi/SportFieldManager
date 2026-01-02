@@ -10,7 +10,9 @@ const props = defineProps({
 
 const route = useRoute();
 const match = ref(null);
+const canAddResults = ref(false);
 const creator = ref(false);
+const adding = ref(false);
 
 const updateResult = async (data) => {
   data.sport = props.tournament.sport;
@@ -28,15 +30,23 @@ const updateResult = async (data) => {
 };
 
 const loadMatch = async () => {
-  const matchResponse = await fetch(`/matches/${route.params.id}`);
+  const matchResponse = await fetch(`/api/matches/${route.params.id}`);
   match.value = await matchResponse.json();
+  canAddResults.value =
+    creator &&
+    match.value.status === "upcoming" &&
+    new Date(match.value.date) > new Date();
 };
 
 onMounted(async () => {
   await loadMatch();
-  const whoamiResposne = await fetch("/api/whoami", { credentials: "include" });
-  const data = await whoamiResposne.json();
-  creator.value = data._id === props.tournament.userId;
+  const response = await fetch("/api/whoami", { credentials: "include" });
+  if (!response.ok) {
+    // TODO boh
+  } else {
+    const data = await response.json();
+    creator.value = data._id === props.tournament.userId;
+  }
 });
 </script>
 
@@ -46,16 +56,10 @@ onMounted(async () => {
     <h2>{{ match.teams[0] }} vs. {{ match.teams[1] }}</h2>
     <ul>
       <li>{{ match.date }}</li>
-      <button
-        v-if="
-          match.status === 'upcoming' &&
-          creator &&
-          new Date(match.startDate) > new Date()
-        "
-      >
+      <button v-if="canAddResults && !adding" @click="adding = true">
         Add results
       </button>
-      <div v-else>
+      <div v-if="canAddResults && adding">
         <Tennis v-if="tournament.sport === 'tennis'" @update="updateResult" />
         <SportResult v-else @update="updateResult" />
       </div>
