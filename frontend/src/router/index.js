@@ -9,6 +9,10 @@ import Tournament from "@/components/tournaments/Tournament.vue";
 import Schedule from "@/components/tournaments/Schedule.vue";
 import Match from "@/components/match/Match.vue";
 import Standing from "@/components/tournaments/Standing.vue";
+import UsersList from "@/components/users/UsersList.vue";
+import User from "@/components/users/User.vue";
+import NewTeam from "@/components/team/NewTeam.vue";
+import Team from "@/components/team/Team.vue";
 
 const routes = [
   { path: "/", component: Search },
@@ -20,6 +24,10 @@ const routes = [
   { path: "/tournaments/:id/schedule", component: Schedule, props: true },
   { path: "/match/:id", component: Match, props: true },
   { path: "/tournament/:id/standings", component: Standing, props: true },
+  { path: "/users", component: UsersList },
+  { path: "/users/:id", component: User },
+  { path: "/teams/new", component: NewTeam },
+  { path: "/teams/:id", component: Team },
 ];
 
 export default createRouter({
