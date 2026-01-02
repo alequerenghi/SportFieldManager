@@ -1,23 +1,3 @@
-allow registered users to:
-- search for fields, tournaments, teams and players;
-- create tournaments associated with a specific sport;
-- add teams and players to tournaments;
-
-● Tournament creation: authenticated users may create a tournament specifying:
-○ name
-○ sport (football, volleyball, basketball)
-○ maximum number of teams
-○ start date
-
-● Team creation: the tournament’s creator can add teams by specifying a team name.
-● Player management: teams can contain multiple players, each with:
-○ name
-○ surname
-○ optional jersey number
-
-● Search: partial, case-insensitive search should be available for fields, tournaments,
-teams, players (eg, searching "cal" should match “Calcio”, “Calisthenics Arena”,
-“California Team”, etc.);
 ● User list: it is possible to view a list of users, optionally filtered by a search
 parameter. For each user, all tournaments created by them will be shown.
 
