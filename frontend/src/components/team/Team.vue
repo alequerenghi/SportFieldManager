@@ -4,7 +4,7 @@ import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
-const creator = computed(() => auth._id === team.value.creatorId);
+const creator = computed(() => auth._id === team.value.userId);
 const adding = ref(false);
 const name = ref("");
 const surname = ref("");

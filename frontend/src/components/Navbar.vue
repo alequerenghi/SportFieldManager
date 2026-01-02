@@ -41,11 +41,11 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
     <div v-else>
       <button @click="logout">Logout</button>
       <button @click.stop="menu = !menu">
-        {{ username }}
+        {{ auth.username }}
       </button>
       <div v-if="menu" ref="menuRef">
         <RouterLink to="/tournaments/new">New tournament</RouterLink>
-        <RouterLink to="/team/new">New team</RouterLink>
+        <RouterLink to="/teams/new">New team</RouterLink>
         <RouterLink to="/users">Users</RouterLink>
       </div>
     </div>

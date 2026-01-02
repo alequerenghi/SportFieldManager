@@ -21,13 +21,15 @@ onMounted(async () => {
   <div v-if="results">
     <table>
       <thead v-if="props.sport === 'tennis'">
-        <th>Team name</th>
-        <th>Points</th>
-        <th>Matches played</th>
-        <th>Sets won</th>
-        <th>Sets lost</th>
-        <th>Games won</th>
-        <th>Matches won</th>
+        <tr>
+          <th>Team name</th>
+          <th>Points</th>
+          <th>Matches played</th>
+          <th>Sets won</th>
+          <th>Sets lost</th>
+          <th>Games won</th>
+          <th>Matches won</th>
+        </tr>
       </thead>
       <thead v-else>
         <tr>

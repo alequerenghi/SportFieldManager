@@ -24,7 +24,7 @@ const login = async () => {
   if (!response.ok) {
     errorMessage.value = await response.text();
   } else {
-    router.push("/signin");
+    router.push("/login");
   }
 };
 </script>
@@ -39,4 +39,5 @@ const login = async () => {
     <button type="submit">Register</button>
   </form>
   <p>{{ errorMessage }}</p>
+  <RouterLink to="/login">Already a user: signin</RouterLink>
 </template>

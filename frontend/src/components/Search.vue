@@ -57,7 +57,9 @@ onMounted(async () => {
     <ul>
       <li v-for="player in players" :key="player.surname">
         {{ player.name }} {{ player.surname }}, {{ player.team
-        }}{{ player.jerseyNumber ? `with number: ${player.jerseyNumber}` : "" }}
+        }}{{
+          player.jerseyNumber ? ` with number: ${player.jerseyNumber}` : ""
+        }}
       </li>
     </ul>
   </div>

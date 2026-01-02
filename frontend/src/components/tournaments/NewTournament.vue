@@ -25,8 +25,8 @@ const createTournament = async () => {
   if (!response.ok) {
     errorMessage.value = await response.text();
   } else {
-    const data = await response.json();
-    router.push(`/tournaments/${data}`);
+    const { id } = await response.json();
+    router.push(`/tournaments/${id}`);
   }
 };
 </script>

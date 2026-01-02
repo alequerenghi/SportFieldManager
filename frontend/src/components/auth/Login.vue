@@ -31,4 +31,5 @@ const login = async () => {
     <button type="submit">Login</button>
   </form>
   <p>{{ errorMessage }}</p>
+  <RouterLink to="/signup">Not a user, signup instead</RouterLink>
 </template>

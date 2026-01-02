@@ -50,7 +50,7 @@ app.get("/api/players", async (req, res, next) => {
       .find({ _id: { $in: teamIds } })
       .toArray();
     players.forEach((p) => {
-      p.team = teams.find((t) => t._id.toString() === p.teamId.toString());
+      p.team = teams.find((t) => t._id.toString() === p.teamId.toString()).name;
     });
     res.json(players);
   } catch (error) {

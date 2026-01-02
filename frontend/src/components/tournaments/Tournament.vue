@@ -6,7 +6,7 @@ import { auth } from "@/stores/auth";
 
 const router = useRouter();
 const route = useRoute();
-const isCreator = computed(() => auth._id === tournament.value.creatorId);
+const isCreator = computed(() => auth._id === tournament.value.userId);
 const creatorData = ref(null);
 const errorMessage = ref("");
 const modifying = ref("no");
@@ -101,7 +101,8 @@ onMounted(async () => {
   await auth.fetchUser();
 
   const creatorResponse = await fetch(`/api/users/${userId}`);
-  creatorData.value = await creatorResponse.json();
+  const { user } = await creatorResponse.json();
+  creatorData.value = user;
 });
 
 const handleClickOutside = () => (showSuggestions.value = false);
@@ -117,7 +118,7 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
       <ul>
         <li>Sport: {{ tournament.sport }}</li>
         <li>Max teams: {{ tournament.maxTeams }}</li>
-        <li>
+        <li v-if="creatorData">
           Created by:
           <RouterLink :to="`/users/${creatorData._id}`">
             {{ creatorData.username }}</RouterLink

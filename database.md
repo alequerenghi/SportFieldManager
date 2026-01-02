@@ -62,7 +62,7 @@ Authenticated users may create a tournament with:
   sport: String,
   maximum_teams: Number,
   fieldId: ObjectId,
-  creatorId: ObjectId,
+  userId: ObjectId,
   startDate: Date,
   teams: Array(ObjectId)
 }
@@ -80,6 +80,7 @@ Multiple players, each with:
   name: String,
   surname: String,
   jerseyNumber: Number,
+  teamId: ObjectId
 }
 ```
 
@@ -88,7 +89,7 @@ Team:
 ```js
 {
   name: String,
-  players: Array(ObjectId),
+  userId: ObjectId
 }
 ```
 
