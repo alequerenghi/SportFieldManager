@@ -22,7 +22,6 @@ app.use(express.json());
 app.use(express.urlencoded());
 app.use(cookieParser());
 app.use("/api/auth", auth);
-// TODO use absolute path
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 app.use("/api/fields", fields);
 app.use("/api/tournaments", tournaments);
@@ -33,6 +32,7 @@ app.use("/api/teams", teams);
 app.get("/api/whoami", verifyToken, (req, res) => {
   res.json({ authenticated: true, ...req.token });
 });
+
 app.get("/api/players", async (req, res, next) => {
   try {
     const { q } = req.query;
@@ -44,7 +44,7 @@ app.get("/api/players", async (req, res, next) => {
         $or: [{ name: regex }, { surname: regex }],
       })
       .toArray();
-    const teamIds = new Set(players.map((p) => p.teamId));
+    const teamIds = [...new Set(players.map((p) => p.teamId))];
     const teams = await db
       .collection("teams")
       .find({ _id: { $in: teamIds } })
@@ -71,9 +71,9 @@ const createIndexes = async (db) => {
   await db.collection("matches").createIndex({ tournamentId: 1, round: 1 });
   await db.collection("matches").createIndex({ tournamentId: 1, status: 1 });
 };
-app.get("/*", (req, res) =>
-  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"))
-);
+// app.get("/*", (req, res) =>
+//   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"))
+// );
 
 const db = await getConnection();
 await createIndexes(db);

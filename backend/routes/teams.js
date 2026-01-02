@@ -53,7 +53,7 @@ router.put("/:id", verifyToken, async (req, res, next) => {
     if (!team) {
       throw new HttpError(404);
     }
-    if (team.userId.toString() !== req.token._id.toString()) {
+    if (team.creatorId.toString() !== req.token._id.toString()) {
       throw new HttpError(403);
     }
     const parsed = PlayerSchema.safeParse(req.body);
