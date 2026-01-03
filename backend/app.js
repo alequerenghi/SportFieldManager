@@ -57,6 +57,28 @@ app.get("/api/players", async (req, res, next) => {
     next(error);
   }
 });
+app.use((err, req, res, next) => {
+  console.log(err);
+  const status = err.status || 500;
+  let message = "";
+  if (!err.message) {
+    switch (status) {
+      case 404:
+        message = "Not found";
+        break;
+      case 403:
+        message = "Unauthorized";
+        break;
+      case 500:
+        message = "Server error";
+        break;
+    }
+  } else {
+    message = err.message;
+  }
+  console.log(status, message);
+  res.status(status).json({ error: message });
+});
 
 const createIndexes = async (db) => {
   await db
