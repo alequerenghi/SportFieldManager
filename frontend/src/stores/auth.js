@@ -11,6 +11,10 @@ export const auth = reactive({
       this.username = data.username;
       this.authenticated = true;
       this._id = data._id;
+    } else {
+      this.username = null;
+      this.authenticated = false;
+      this._id = null;
     }
   },
 });
