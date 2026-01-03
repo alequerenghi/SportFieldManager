@@ -1,12 +1,9 @@
 <script setup>
 import { RouterLink, useRouter } from "vue-router";
-import { onMounted, onUnmounted, ref } from "vue";
+import { onMounted } from "vue";
 import { auth } from "@/stores/auth";
 
 const router = useRouter();
-
-const menu = ref(false);
-const menuRef = ref(null);
 
 const logout = async () => {
   const response = await fetch("/api/auth/logout", {
@@ -16,37 +13,62 @@ const logout = async () => {
   if (response.ok) {
     auth.authenticated = false;
     auth.username = null;
+    auth._id = null;
   }
 };
 
-const handleClickOutside = (event) => {
-  if (menuRef.value && !menuRef.value.contains(event.target)) {
-    menu.value = false;
-  }
-};
-
-onMounted(async () => {
-  await auth.fetchUser();
-  document.addEventListener("click", handleClickOutside);
-});
-onUnmounted(() => document.removeEventListener("click", handleClickOutside));
+onMounted(async () => await auth.fetchUser());
 </script>
 
 <template>
-  <nav>
-    <div v-if="!auth.authenticated">
-      <button @click="router.push('/login')">Login</button>
-      <button @click="router.push('/signup')">Signup</button>
-    </div>
-    <div v-else>
-      <button @click="logout">Logout</button>
-      <button @click.stop="menu = !menu">
-        {{ auth.username }}
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <button @click="router.push('/')">Home</button>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNavDropdown"
+        aria-controls="navbarNavDropdown"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
       </button>
-      <div v-if="menu" ref="menuRef">
-        <RouterLink to="/tournaments/new">New tournament</RouterLink>
-        <RouterLink to="/teams/new">New team</RouterLink>
-        <RouterLink to="/users">Users</RouterLink>
+      <div
+        v-if="!auth.authenticated"
+        class="collapse navbar-collapse"
+        id="navbarNavDropdown"
+      >
+        <button @click="router.push('/login')">Login</button>
+        <button @click="router.push('/signup')">Signup</button>
+      </div>
+      <div v-else class="collapse navbar-collapse" id="navbarNavDropdown">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a @click="logout" class="nav-link active">Logout</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              id="navbarDropdownMenuLink"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              {{ auth.username }}
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <RouterLink class="dropdown-item" to="/tournaments/new"
+                >New tournament</RouterLink
+              >
+              <RouterLink class="dropdown-item" to="/teams/new"
+                >New team</RouterLink
+              >
+              <RouterLink class="dropdown-item" to="/users">Users</RouterLink>
+            </div>
+          </li>
+        </ul>
       </div>
     </div>
   </nav>

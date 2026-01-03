@@ -42,10 +42,10 @@ const computeStandings = (sport, matches) => {
     const [homeTeam, awayTeam] = match.teams;
     const [victory, draw, lost] =
       pointsPerSport[sport === "football" ? "football" : "rest"];
-    if (match.score[0] > match.score[1]) {
+    if (match.result[0] > match.result[1]) {
       agg[homeTeam].score += victory;
       agg[awayTeam].score += lost;
-    } else if (match.score[0] < match.score[1]) {
+    } else if (match.result[0] < match.result[1]) {
       agg[homeTeam].score += lost;
       agg[awayTeam].score += victory;
     } else {
@@ -53,8 +53,8 @@ const computeStandings = (sport, matches) => {
       agg[awayTeam].score += draw;
     }
     for (let i = 0; i < 2; i++) {
-      agg[homeTeam].goals[i] += match.score[i];
-      agg[awayTeam].goals[1 - i] += match.score[i];
+      agg[homeTeam].goals[i] += match.result[i];
+      agg[awayTeam].goals[1 - i] += match.result[i];
     }
     return agg;
   }, {});
@@ -70,6 +70,7 @@ const computeTennisStandings = (matches) => {
   const standings = {};
 
   for (const match of matches) {
+    console.log(match.result);
     const [teamA, teamB] = match.teams;
 
     if (!standings[teamA]) {
@@ -277,17 +278,32 @@ router.post(
 );
 router.get("/:id/matches", async (req, res, next) => {
   try {
+    const id = new ObjectId(req.params.id);
     const db = await getConnection();
-    const matches = await db
+    const tournament = await db.collection("tournaments").findOne({ _id: id });
+    if (!tournament) {
+      throw new HttpError(404);
+    }
+    const rounds = await db
       .collection("matches")
       .aggregate([
-        { $match: { tournamentId: new ObjectId(req.params.id) } },
+        { $match: { tournamentId: id } },
         { $group: { _id: "$round", matches: { $push: "$$ROOT" } } },
         { $sort: { _id: 1 } },
         { $project: { _id: 0, round: "$_id", matches: 1 } },
       ])
       .toArray();
-    res.json(matches);
+    const teams = await db
+      .collection("teams")
+      .find({ _id: { $in: tournament.teams } })
+      .toArray();
+    const teamMap = new Map(teams.map((t) => [t._id.toString(), t.name]));
+    rounds.forEach((r) =>
+      r.matches.forEach(
+        (m) => (m.teams = m.teams.map((id) => teamMap.get(id.toString())))
+      )
+    );
+    res.json(rounds);
   } catch (error) {
     next(error);
   }
@@ -304,6 +320,7 @@ router.get("/:id/standings", async (req, res, next) => {
       .collection("matches")
       .find({ tournamentId: id, status: "completed" })
       .toArray();
+    console.log(matches);
     const standings =
       tournament.sport === "tennis"
         ? computeTennisStandings(matches)

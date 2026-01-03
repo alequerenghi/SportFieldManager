@@ -32,6 +32,21 @@ router.post("/", verifyToken, async (req, res, next) => {
     next(error);
   }
 });
+router.get("/:id", async (req, res, next) => {
+  try {
+    const id = new ObjectId(req.params.id);
+    const db = await getConnection();
+    const team = await db.collection("teams").findOne({ _id: id });
+    const players = await db
+      .collection("players")
+      .find({ teamId: id })
+      .toArray();
+    team.players = players;
+    res.json(team);
+  } catch (error) {
+    next(error);
+  }
+});
 router.get("/", async (req, res, next) => {
   try {
     const { q = "" } = req.query;
@@ -49,13 +64,14 @@ router.put("/:id", verifyToken, async (req, res, next) => {
   try {
     const id = new ObjectId(req.params.id);
     const db = await getConnection();
-    const team = db.collection("teams").findOne({ _id: id });
+    const team = await db.collection("teams").findOne({ _id: id });
     if (!team) {
       throw new HttpError(404);
     }
-    if (team.userId.toString() !== req.token._id.toString()) {
+    if (team.userId.toString() !== req.token._id) {
       throw new HttpError(403);
     }
+    console.log(req.body);
     const parsed = PlayerSchema.safeParse(req.body);
     if (!parsed.success) {
       throw new HttpError(400, "Invalid payload structure");

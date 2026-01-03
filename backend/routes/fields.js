@@ -12,9 +12,7 @@ const verifyTokenNotRequired = async (req, res, next) => {
   if (token) {
     try {
       req.token = verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-      next(err);
-    }
+    } catch (err) {}
   }
   next();
 };

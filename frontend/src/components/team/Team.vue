@@ -13,11 +13,19 @@ const team = ref(null);
 const errorMessage = ref("");
 
 const addPlayer = () => {
+  errorMessage.value = "";
+  if (!name.value || !surname.value) {
+    errorMessage.value = "Name and surname are required";
+    return;
+  }
   const newPlayer = {
     name: name.value,
     surname: surname.value,
     jerseyNumber: jerseyNumber.value,
   };
+  if (!newPlayer.jerseyNumber) {
+    delete newPlayer.jerseyNumber;
+  }
   team.value.players.push(newPlayer);
   name.value = "";
   surname.value = "";
@@ -39,6 +47,7 @@ const registerNewPlayers = async () => {
 };
 
 const loadTeam = async () => {
+  adding.value = false;
   const response = await fetch(`/api/teams/${route.params.id}`);
   team.value = await response.json();
 };
@@ -53,10 +62,11 @@ onMounted(async () => {
   <div v-if="team">
     <h1>{{ team.name }}</h1>
     <form v-if="creator && adding" @submit.prevent="registerNewPlayers">
-      <input placeholder="Name" v-model="name" required />
-      <input placeholder="Surname" v-model="surname" required />
+      <input placeholder="Name" v-model="name" />
+      <input placeholder="Surname" v-model="surname" />
       <input type="number" v-model="jerseyNumber" />
       <button type="button" @click="addPlayer">Add player</button>
+      <button type="submit">Send data</button>
     </form>
     <ul>
       <li v-for="(player, index) in team.players" :key="index">

@@ -65,7 +65,7 @@ const generate = async () => {
   if (!response.ok) {
     errorMessage.value = await response.text();
   }
-  router.push(`/tournament/${route.params.id}/schedule`);
+  router.push(`/tournaments/${route.params.id}/schedule`);
 };
 
 const loadTournament = async () => {
@@ -128,13 +128,11 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
         <li>Teams:</li>
         <ul>
           <li v-for="team in tournament.teams">
-            <RouterLink :to="`/team/${team._id}`">{{ team.name }}</RouterLink>
+            <RouterLink :to="`/teams/${team._id}`">{{ team.name }}</RouterLink>
           </li>
         </ul>
         <li v-if="tournament.schedule">
-          <RouterLink
-            :to="`/tournaments/${route.params.id}/schedule`"
-            :tournament="tournament"
+          <RouterLink :to="`/tournaments/${route.params.id}/schedule`"
             >Schedule</RouterLink
           >
         </li>
@@ -177,12 +175,8 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
         <button @click.prevent="deleteTournament">Delete</button>
         <button @click="generate" v-if="!tournament.schedule">Generate</button>
       </div>
-      <button
-        @click="router.push(`/tournaments/${route.params.id}/standings`)"
-        :tournamentId="route.params.id"
-        :sport="tournament.sport"
-      >
-        Go to standings
+      <button @click="router.push(`/tournaments/${route.params.id}/standings`)">
+        View standings
       </button>
       <p>{{ errorMessage }}</p>
     </div>

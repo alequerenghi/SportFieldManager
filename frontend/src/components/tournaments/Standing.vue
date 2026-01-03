@@ -2,17 +2,21 @@
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 
-const props = defineProps({ sport: String });
-
 const route = useRoute();
 const results = ref(null);
 const pointsCalled = ref("");
+const sport = ref("");
 
 onMounted(async () => {
-  const response = await fetch(`/api/tournaments/${route.params.id}/standings`);
+  const response = await fetch(`/api/tournaments/${route.params.id}`);
   if (response.ok) {
-    results.value = await response.json();
-    pointsCalled.value = props.sport === "football" ? "Goals" : "Points";
+    const tournament = await response.json();
+    sport.value = tournament.sport;
+    pointsCalled.value = sport.value === "football" ? "Goals" : "Points";
+    const standing = await fetch(
+      `/api/tournaments/${route.params.id}/standings`
+    );
+    results.value = await standing.json();
   }
 });
 </script>
@@ -20,7 +24,7 @@ onMounted(async () => {
 <template>
   <div v-if="results">
     <table>
-      <thead v-if="props.sport === 'tennis'">
+      <thead v-if="sport === 'tennis'">
         <tr>
           <th>Team name</th>
           <th>Points</th>
@@ -41,7 +45,7 @@ onMounted(async () => {
           <th>{{ pointsCalled }} difference</th>
         </tr>
       </thead>
-      <tbody v-if="props.sport === 'tennis'">
+      <tbody v-if="sport === 'tennis'">
         <tr v-for="[team, result] in results">
           <td>{{ team }}</td>
           <td>{{ result.points }}</td>

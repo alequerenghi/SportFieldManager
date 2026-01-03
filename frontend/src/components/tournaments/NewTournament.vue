@@ -32,6 +32,7 @@ const createTournament = async () => {
 </script>
 
 <template>
+  <h1>Register new tournament</h1>
   <form @submit.prevent="createTournament">
     <input placeholder="Tournament name" v-model="name" required />
     <input

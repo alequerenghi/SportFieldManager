@@ -21,11 +21,11 @@ const makeBooking = async (slot) => {
     const { err } = await response.json();
     errorMessage.value = err;
   } else {
-    const { bookingId } = await response.json();
+    const { id } = await response.json();
     errorMessage.value = "";
     slot.me = true;
     slot.available = false;
-    slot._id = bookingId;
+    slot._id = id;
   }
 };
 

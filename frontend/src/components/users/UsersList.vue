@@ -9,10 +9,13 @@ const searchBar = ref("");
 let debounce = null;
 watch(searchBar, (query) => {
   clearTimeout(debounce);
-  debounce = setTimeout(async () => await searchSingle("users", query), 400);
+  debounce = setTimeout(async () => await updateUsers(query), 400);
 });
 
-onMounted(async () => await searchSingle("users", ""));
+const updateUsers = async (query) =>
+  (users.value = await searchSingle("users", query));
+
+onMounted(async () => await updateUsers(""));
 </script>
 
 <template>

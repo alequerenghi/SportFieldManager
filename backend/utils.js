@@ -28,7 +28,7 @@ const assertCreator = async (req, res, next) => {
     if (!tournament) {
       throw new HttpError(404);
     }
-    if (tournament.userId.toString() !== req.token._id.toString()) {
+    if (tournament.userId.toString() !== req.token._id) {
       throw new HttpError(403);
     }
     req.tournament = tournament;
