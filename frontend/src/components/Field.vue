@@ -80,15 +80,33 @@ onMounted(async () => {
       <form>
         <input type="date" v-model="calendar" />
       </form>
-      <ul v-if="auth.authenticated">
-        <li v-for="slot in slots" :key="slot.slot">
-          <button @click="makeBooking(slot)" :disabled="!slot.available">
-            {{ slot.slot }}
-          </button>
-          <button v-if="slot.me" @click="deleteBooking(slot)">DELETE</button>
-        </li>
-      </ul>
+      <div v-if="auth.authenticated" class="d-grid gap-2 d-md-block">
+        <ul>
+          <li v-for="slot in slots" :key="slot.slot">
+            <button
+              @click="makeBooking(slot)"
+              :disabled="!slot.available"
+              class="btn btn-outline-primary btn-lg btn-block"
+            >
+              {{ slot.slot }}
+            </button>
+            <button
+              v-if="slot.me"
+              @click="deleteBooking(slot)"
+              class="btn btn-danger btn-sm"
+            >
+              DELETE
+            </button>
+          </li>
+        </ul>
+      </div>
     </ul>
     <p>{{ errorMessage }}</p>
   </div>
 </template>
+
+<style scoped>
+button {
+  width: 6em;
+}
+</style>

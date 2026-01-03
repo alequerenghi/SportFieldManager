@@ -23,7 +23,9 @@ onMounted(async () => await auth.fetchUser());
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
-      <button @click="router.push('/')">Home</button>
+      <button @click="router.push('/')" class="btn btn-outline-success me-2">
+        Home
+      </button>
       <button
         class="navbar-toggler"
         type="button"
@@ -40,13 +42,25 @@ onMounted(async () => await auth.fetchUser());
         class="collapse navbar-collapse"
         id="navbarNavDropdown"
       >
-        <button @click="router.push('/login')">Login</button>
-        <button @click="router.push('/signup')">Signup</button>
+        <button
+          @click="router.push('/login')"
+          class="btn btn-sm btn-outline-secondary"
+        >
+          Login
+        </button>
+        <button
+          @click="router.push('/signup')"
+          class="btn btn-sm btn-outline-secondary"
+        >
+          Signup
+        </button>
       </div>
       <div v-else class="collapse navbar-collapse" id="navbarNavDropdown">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a @click="logout" class="nav-link active">Logout</a>
+            <button @click="logout" class="btn btn-sm btn-outline-secondary">
+              Logout
+            </button>
           </li>
           <li class="nav-item dropdown">
             <a

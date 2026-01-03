@@ -33,17 +33,86 @@ const createTournament = async () => {
 
 <template>
   <h1>Register new tournament</h1>
-  <form @submit.prevent="createTournament">
-    <input placeholder="Tournament name" v-model="name" required />
-    <input
-      type="number"
-      placeholder="Max teams"
-      v-model.number="maxTeams"
-      required
-    />
-    <input placeholder="Sport" v-model="sport" required />
-    <input type="date" placeholder="Start date" v-model="startDate" required />
-    <button type="submit">Create!</button>
+  <form @submit.prevent="createTournament" class="w-100">
+    <div class="row mb-3">
+      <div class="col-md-3 d-flex align-items-center">
+        <p class="mb-0 p-0">Tournament name:</p>
+      </div>
+      <div class="col-md-8">
+        <div data-mdb-input-init class="form-outline">
+          <input
+            v-model="name"
+            class="form-control"
+            id="tournament-name"
+            placeholder="Enter name"
+            required
+          />
+        </div>
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-3 d-flex align-items-center">
+        <p class="mb-0 p-0">Max teams</p>
+      </div>
+      <div class="col-md-8">
+        <div data-mdb-input-init class="form-outline">
+          <input
+            type="number"
+            v-model.number="maxTeams"
+            class="form-control"
+            id="maxTeams"
+            required
+          />
+        </div>
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-3 d-flex align-items-center">
+        <p class="mb-0 p-0">Sport:</p>
+      </div>
+      <div class="col-md-8">
+        <div data-mdb-input-init class="form-outline">
+          <input
+            placeholder="Sport"
+            v-model="sport"
+            class="form-control"
+            id="sport"
+            required
+          />
+        </div>
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-3 d-flex align-items-center">
+        <p class="mb-0 p-0">Start date:</p>
+      </div>
+      <div class="col-md-8">
+        <div data-mdb-input-init class="form-outline">
+          <input
+            type="date"
+            placeholder="Start date"
+            v-model="startDate"
+            class="form-control"
+            id="date"
+            required
+          />
+        </div>
+      </div>
+    </div>
+
+    <button
+      type="submit"
+      data-mdb-button-init
+      data-mdb-ripple-init
+      class="btn btn-primary"
+    >
+      Sign in
+    </button>
   </form>
-  <p>{{ errorMessage }}</p>
 </template>
+
+<style scoped>
+form {
+  max-width: 650px;
+}
+</style>

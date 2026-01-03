@@ -112,7 +112,7 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 </script>
 
 <template>
-  <div v-if="tournament">
+  <div v-if="tournament" id="tournament-info">
     <h1>{{ tournament.name }}</h1>
     <div>
       <ul>
@@ -140,11 +140,13 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
           v-if="modifying === 'teams'"
           @submit.prevent="updateTournamentInfo"
         >
-          <input
-            v-if="tournament.teams.length <= tournament.maxTeams"
-            placeholder="Team Name"
-            v-model="newTeam"
-          />
+          <div class="row">
+            <input
+              v-if="tournament.teams.length <= tournament.maxTeams"
+              placeholder="Team Name"
+              v-model="newTeam"
+            />
+          </div>
           <ul v-if="showSuggestions">
             <li v-for="team in suggestedTeams" :key="team.name">
               <a @click="addTeam(team)">{{ team.name }}</a>
@@ -156,11 +158,15 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
           v-else-if="modifying === 'info'"
           @submit.prevent="updateTournamentInfo"
         >
-          <input
-            type="text"
-            placeholder="New Team Name"
-            v-model="newTeamName"
-          />
+          <div class="row">
+            <label
+              class=""
+              <input
+              type="text"
+              placeholder="New Team Name"
+              v-model="newTeamName"
+            />
+          </div>
           <input
             type="number"
             placeholder="{{ tournament.maxTeams }}"
@@ -175,10 +181,19 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
         <button @click.prevent="deleteTournament">Delete</button>
         <button @click="generate" v-if="!tournament.schedule">Generate</button>
       </div>
-      <button @click="router.push(`/tournaments/${route.params.id}/standings`)">
+      <button
+        @click="router.push(`/tournaments/${route.params.id}/standings`)"
+        class="btn btn-secondary"
+      >
         View standings
       </button>
       <p>{{ errorMessage }}</p>
     </div>
   </div>
 </template>
+
+<style scoped>
+#tournament-info {
+  max-width: 650px;
+}
+</style>
