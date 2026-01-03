@@ -112,83 +112,138 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 </script>
 
 <template>
-  <div v-if="tournament" id="tournament-info">
-    <h1>{{ tournament.name }}</h1>
-    <div>
-      <ul>
-        <li>Sport: {{ tournament.sport }}</li>
-        <li>Max teams: {{ tournament.maxTeams }}</li>
-        <li v-if="creatorData">
-          Created by:
-          <RouterLink :to="`/users/${creatorData._id}`">
-            {{ creatorData.username }}</RouterLink
-          >
+  <div v-if="tournament" id="tournament-info" class="container mt-4">
+    <h1 class="mb-3">{{ tournament.name }}</h1>
+
+    <ul class="list-unstyled mb-4">
+      <li><strong>Sport:</strong> {{ tournament.sport }}</li>
+      <li><strong>Max teams:</strong> {{ tournament.maxTeams }}</li>
+
+      <li v-if="creatorData">
+        <strong>Created by:</strong>
+        <RouterLink :to="`/users/${creatorData._id}`">
+          {{ creatorData.username }}
+        </RouterLink>
+      </li>
+
+      <li>
+        <strong>Start date:</strong>
+        {{ new Date(tournament.startDate).toDateString() }}
+      </li>
+
+      <li class="mt-2"><strong>Teams:</strong></li>
+      <ul class="ps-3">
+        <li v-for="team in tournament.teams" :key="team._id">
+          <RouterLink :to="`/teams/${team._id}`">
+            {{ team.name }}
+          </RouterLink>
         </li>
-        <li>Start date: {{ new Date(tournament.startDate).toDateString() }}</li>
-        <li>Teams:</li>
-        <ul>
-          <li v-for="team in tournament.teams">
-            <RouterLink :to="`/teams/${team._id}`">{{ team.name }}</RouterLink>
-          </li>
-        </ul>
-        <li v-if="tournament.schedule">
-          <RouterLink :to="`/tournaments/${route.params.id}/schedule`"
-            >Schedule</RouterLink
-          >
+      </ul>
+
+      <li v-if="tournament.schedule" class="mt-2">
+        <RouterLink
+          class="btn btn-outline-secondary btn-sm"
+          :to="`/tournaments/${route.params.id}/schedule`"
+        >
+          View schedule
+        </RouterLink>
+      </li>
+    </ul>
+
+    <!-- ADD TEAM FORM -->
+    <form
+      v-if="modifying === 'teams'"
+      @submit.prevent="updateTournamentInfo"
+      class="mb-4"
+    >
+      <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Team name</label>
+        <div class="col-sm-9">
+          <input
+            v-if="tournament.teams.length <= tournament.maxTeams"
+            v-model="newTeam"
+            class="form-control"
+            placeholder="Search team"
+          />
+        </div>
+      </div>
+
+      <ul v-if="showSuggestions" class="list-group mb-3">
+        <li
+          v-for="team in suggestedTeams"
+          :key="team._id"
+          class="list-group-item list-group-item-action"
+          @click="addTeam(team)"
+        >
+          {{ team.name }}
         </li>
-        <form
-          v-if="modifying === 'teams'"
-          @submit.prevent="updateTournamentInfo"
-        >
-          <div class="row">
-            <input
-              v-if="tournament.teams.length <= tournament.maxTeams"
-              placeholder="Team Name"
-              v-model="newTeam"
-            />
-          </div>
-          <ul v-if="showSuggestions">
-            <li v-for="team in suggestedTeams" :key="team.name">
-              <a @click="addTeam(team)">{{ team.name }}</a>
-            </li>
-          </ul>
-          <input type="submit" value="Send data" />
-        </form>
-        <form
-          v-else-if="modifying === 'info'"
-          @submit.prevent="updateTournamentInfo"
-        >
-          <div class="row">
-            <label
-              class=""
-              <input
-              type="text"
-              placeholder="New Team Name"
-              v-model="newTeamName"
-            />
-          </div>
+      </ul>
+
+      <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+
+    <!-- EDIT INFO FORM -->
+    <form
+      v-else-if="modifying === 'info'"
+      @submit.prevent="updateTournamentInfo"
+      class="mb-4"
+    >
+      <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Tournament name</label>
+        <div class="col-sm-9">
+          <input
+            type="text"
+            v-model="newTeamName"
+            class="form-control"
+            placeholder="New tournament name"
+          />
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Max teams</label>
+        <div class="col-sm-9">
           <input
             type="number"
-            placeholder="{{ tournament.maxTeams }}"
             v-model.number="newMaxTeams"
+            class="form-control"
           />
-          <input type="submit" value="Send data" />
-        </form>
-      </ul>
-      <div v-if="isCreator">
-        <button @click="modifying = 'info'">Edit info</button>
-        <button @click="modifying = 'teams'">Add team</button>
-        <button @click.prevent="deleteTournament">Delete</button>
-        <button @click="generate" v-if="!tournament.schedule">Generate</button>
+        </div>
       </div>
+
+      <button type="submit" class="btn btn-primary">Save changes</button>
+    </form>
+
+    <!-- CREATOR ACTIONS -->
+    <div v-if="isCreator" class="btn-group mb-3">
+      <button class="btn btn-outline-primary" @click="modifying = 'info'">
+        Edit info
+      </button>
+      <button class="btn btn-outline-success" @click="modifying = 'teams'">
+        Add team
+      </button>
+      <button class="btn btn-outline-danger" @click.prevent="deleteTournament">
+        Delete
+      </button>
       <button
-        @click="router.push(`/tournaments/${route.params.id}/standings`)"
+        class="btn btn-outline-warning"
+        v-if="!tournament.schedule"
+        @click="generate"
+      >
+        Generate matches
+      </button>
+    </div>
+
+    <div class="mt-3">
+      <button
         class="btn btn-secondary"
+        @click="router.push(`/tournaments/${route.params.id}/standings`)"
       >
         View standings
       </button>
-      <p>{{ errorMessage }}</p>
     </div>
+
+    <p class="text-danger mt-3">{{ errorMessage }}</p>
   </div>
 </template>
 
