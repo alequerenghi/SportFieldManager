@@ -21,13 +21,49 @@ const submitScore = () => {
 </script>
 
 <template>
-  <form @submit.prevent="submitScore">
-    <label>Set scores </label>
-    <div v-for="(_, i) in setScores" :key="i">
-      <input type="number" v-model.number="setScores[i][0]" required />
-      <input type="number" v-model.number="setScores[i][1]" required />
+  <form @submit.prevent="submitScore" class="mt-3">
+    <div class="mb-3">
+      <label class="form-label fw-bold">Set scores</label>
+
+      <div
+        v-for="(_, i) in setScores"
+        :key="i"
+        class="row g-2 mb-2 align-items-center"
+      >
+        <div class="col-5">
+          <input
+            type="number"
+            class="form-control form-control-sm"
+            v-model.number="setScores[i][0]"
+            placeholder="Team A"
+            required
+          />
+        </div>
+
+        <div class="col-2 text-center fw-bold">–</div>
+
+        <div class="col-5">
+          <input
+            type="number"
+            class="form-control form-control-sm"
+            v-model.number="setScores[i][1]"
+            placeholder="Team B"
+            required
+          />
+        </div>
+      </div>
     </div>
-    <button type="button" @click="setScores.push([0, 0])">Add set</button>
-    <button type="submit">Save result</button>
+
+    <div class="d-flex gap-2">
+      <button
+        type="button"
+        @click="setScores.push([0, 0])"
+        class="btn btn-outline-primary btn-sm"
+      >
+        Add set
+      </button>
+
+      <button type="submit" class="btn btn-success btn-sm">Save result</button>
+    </div>
   </form>
 </template>
