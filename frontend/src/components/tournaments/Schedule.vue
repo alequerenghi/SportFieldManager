@@ -19,19 +19,43 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="tournament">
-    <h1>{{ tournament.name }}</h1>
-    <div v-for="round in rounds" :key="round.round">
-      <h3>Round {{ round.round + 1 }}</h3>
-      <ul>
-        <li v-for="match in round.matches" :key="match._id">
-          <RouterLink :to="`/matches/${match._id}`" :tournament="tournament"
-            >{{ match.teams[0] }} vs. {{ match.teams[1] }}</RouterLink
+  <div v-if="tournament" id="schedule" class="container mt-4">
+    <p v-if="errorMessage" class="alert alert-danger">
+      {{ errorMessage }}
+    </p>
+
+    <h1 class="mb-4">{{ tournament.name }}</h1>
+
+    <div v-for="round in rounds" :key="round.round" class="mb-4">
+      <h3 class="mb-2">Round {{ round.round + 1 }}</h3>
+
+      <ul class="list-group">
+        <li
+          v-for="match in round.matches"
+          :key="match._id"
+          class="list-group-item"
+        >
+          <RouterLink
+            :to="`/matches/${match._id}`"
+            class="text-decoration-none"
           >
+            {{ match.teams[0] }} vs. {{ match.teams[1] }}
+          </RouterLink>
         </li>
       </ul>
-      <p>{{ errorMessage }}</p>
     </div>
-    <a @click="router.go(-1)">Back to tournament info</a>
+
+    <RouterLink
+      :to="`/tournaments/${route.params.id}`"
+      class="btn btn-secondary"
+    >
+      Back to tournament info
+    </RouterLink>
   </div>
 </template>
+
+<style scoped>
+#schedule {
+  max-width: 650px;
+}
+</style>

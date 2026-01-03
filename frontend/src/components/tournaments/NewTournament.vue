@@ -1,4 +1,5 @@
 <script setup>
+import { auth } from "@/stores/auth";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 
@@ -10,6 +11,8 @@ const errorMessage = ref("");
 const sport = ref("");
 
 const createTournament = async () => {
+  await auth.fetchUser();
+  errorMessage.value = "";
   const tournament = {
     name: name.value,
     maxTeams: maxTeams.value,
@@ -23,7 +26,8 @@ const createTournament = async () => {
     credentials: "include",
   });
   if (!response.ok) {
-    errorMessage.value = await response.text();
+    const { error } = await response.json();
+    errorMessage.value = error;
   } else {
     const { id } = await response.json();
     router.push(`/tournaments/${id}`);
@@ -32,87 +36,90 @@ const createTournament = async () => {
 </script>
 
 <template>
-  <h1>Register new tournament</h1>
-  <form @submit.prevent="createTournament" class="w-100">
-    <div class="row mb-3">
-      <div class="col-md-3 d-flex align-items-center">
-        <p class="mb-0 p-0">Tournament name:</p>
-      </div>
-      <div class="col-md-8">
-        <div data-mdb-input-init class="form-outline">
-          <input
-            v-model="name"
-            class="form-control"
-            id="tournament-name"
-            placeholder="Enter name"
-            required
-          />
+  <div id="new-tournament" class="container">
+    <h1>Register new tournament</h1>
+    <p v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</p>
+    <form @submit.prevent="createTournament" class="w-100">
+      <div class="row mb-3">
+        <div class="col-md-3 d-flex align-items-center">
+          <p class="mb-0 p-0">Tournament name:</p>
+        </div>
+        <div class="col-md-8">
+          <div data-mdb-input-init class="form-outline">
+            <input
+              v-model="name"
+              class="form-control"
+              id="tournament-name"
+              placeholder="Enter name"
+              required
+            />
+          </div>
         </div>
       </div>
-    </div>
-    <div class="row mb-3">
-      <div class="col-md-3 d-flex align-items-center">
-        <p class="mb-0 p-0">Max teams</p>
-      </div>
-      <div class="col-md-8">
-        <div data-mdb-input-init class="form-outline">
-          <input
-            type="number"
-            v-model.number="maxTeams"
-            class="form-control"
-            id="maxTeams"
-            required
-          />
+      <div class="row mb-3">
+        <div class="col-md-3 d-flex align-items-center">
+          <p class="mb-0 p-0">Max teams</p>
+        </div>
+        <div class="col-md-8">
+          <div data-mdb-input-init class="form-outline">
+            <input
+              type="number"
+              v-model.number="maxTeams"
+              class="form-control"
+              id="maxTeams"
+              required
+            />
+          </div>
         </div>
       </div>
-    </div>
-    <div class="row mb-3">
-      <div class="col-md-3 d-flex align-items-center">
-        <p class="mb-0 p-0">Sport:</p>
-      </div>
-      <div class="col-md-8">
-        <div data-mdb-input-init class="form-outline">
-          <input
-            placeholder="Sport"
-            v-model="sport"
-            class="form-control"
-            id="sport"
-            required
-          />
+      <div class="row mb-3">
+        <div class="col-md-3 d-flex align-items-center">
+          <p class="mb-0 p-0">Sport:</p>
+        </div>
+        <div class="col-md-8">
+          <div data-mdb-input-init class="form-outline">
+            <input
+              placeholder="Sport"
+              v-model="sport"
+              class="form-control"
+              id="sport"
+              required
+            />
+          </div>
         </div>
       </div>
-    </div>
-    <div class="row mb-3">
-      <div class="col-md-3 d-flex align-items-center">
-        <p class="mb-0 p-0">Start date:</p>
-      </div>
-      <div class="col-md-8">
-        <div data-mdb-input-init class="form-outline">
-          <input
-            type="date"
-            placeholder="Start date"
-            v-model="startDate"
-            class="form-control"
-            id="date"
-            required
-          />
+      <div class="row mb-3">
+        <div class="col-md-3 d-flex align-items-center">
+          <p class="mb-0 p-0">Start date:</p>
+        </div>
+        <div class="col-md-8">
+          <div data-mdb-input-init class="form-outline">
+            <input
+              type="date"
+              placeholder="Start date"
+              v-model="startDate"
+              class="form-control"
+              id="date"
+              required
+            />
+          </div>
         </div>
       </div>
-    </div>
 
-    <button
-      type="submit"
-      data-mdb-button-init
-      data-mdb-ripple-init
-      class="btn btn-primary"
-    >
-      Sign in
-    </button>
-  </form>
+      <button
+        type="submit"
+        data-mdb-button-init
+        data-mdb-ripple-init
+        class="btn btn-success"
+      >
+        Register team
+      </button>
+    </form>
+  </div>
 </template>
 
 <style scoped>
-form {
+#new-tournament {
   max-width: 650px;
 }
 </style>

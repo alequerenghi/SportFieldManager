@@ -19,17 +19,20 @@ const suggestedTeams = ref([]);
 let debounce = null;
 
 const deleteTournament = async () => {
+  errorMessage.value = "";
   const response = await fetch(`/api/tournaments/${route.params.id}`, {
     method: "DELETE",
     credentials: "include",
   });
   if (!response.ok) {
-    errorMessage.value = await response.text();
+    const { error } = await response.json();
+    errorMessage.value = error;
   }
   router.push("/");
 };
 
 const updateTournamentInfo = async () => {
+  errorMessage.value = "";
   const teams = tournament.value.teams.map((t) => t._id);
   const payload = {
     teams,
@@ -47,7 +50,8 @@ const updateTournamentInfo = async () => {
     credentials: "include",
   });
   if (!response.ok) {
-    errorMessage.value = await response.text();
+    const { error } = await response.json();
+    errorMessage.value = error;
   } else {
     await loadTournament();
   }
@@ -55,6 +59,7 @@ const updateTournamentInfo = async () => {
 };
 
 const generate = async () => {
+  errorMessage.value = "";
   const response = await fetch(
     `/api/tournaments/${route.params.id}/matches/generate`,
     {
@@ -63,12 +68,14 @@ const generate = async () => {
     }
   );
   if (!response.ok) {
-    errorMessage.value = await response.text();
+    const { error } = await response.json();
+    errorMessage.value = error;
   }
   router.push(`/tournaments/${route.params.id}/schedule`);
 };
 
 const loadTournament = async () => {
+  errorMessage.value = "";
   const response = await fetch(`/api/tournaments/${route.params.id}`, {
     credentials: "include",
   });
@@ -114,13 +121,14 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 <template>
   <div v-if="tournament" id="tournament-info" class="container mt-4">
     <h1 class="mb-3">{{ tournament.name }}</h1>
+    <p v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</p>
 
     <ul class="list-unstyled mb-4">
-      <li><strong>Sport:</strong> {{ tournament.sport }}</li>
-      <li><strong>Max teams:</strong> {{ tournament.maxTeams }}</li>
+      <li><strong>Sport: </strong> {{ tournament.sport }}</li>
+      <li><strong>Max teams: </strong> {{ tournament.maxTeams }}</li>
 
       <li v-if="creatorData">
-        <strong>Created by:</strong>
+        <strong>Created by: </strong>
         <RouterLink :to="`/users/${creatorData._id}`">
           {{ creatorData.username }}
         </RouterLink>
@@ -131,7 +139,17 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
         {{ new Date(tournament.startDate).toDateString() }}
       </li>
 
-      <li class="mt-2"><strong>Teams:</strong></li>
+      <li v-if="tournament.schedule" class="mt-2">
+        <RouterLink
+          class="btn btn-outline-info btn-sm"
+          :to="`/tournaments/${route.params.id}/schedule`"
+        >
+          View schedule
+        </RouterLink>
+      </li>
+      <li v-if="tournament.teams.length" class="mt-2">
+        <strong>Teams:</strong>
+      </li>
       <ul class="ps-3">
         <li v-for="team in tournament.teams" :key="team._id">
           <RouterLink :to="`/teams/${team._id}`">
@@ -139,15 +157,6 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
           </RouterLink>
         </li>
       </ul>
-
-      <li v-if="tournament.schedule" class="mt-2">
-        <RouterLink
-          class="btn btn-outline-secondary btn-sm"
-          :to="`/tournaments/${route.params.id}/schedule`"
-        >
-          View schedule
-        </RouterLink>
-      </li>
     </ul>
 
     <!-- ADD TEAM FORM -->
@@ -242,8 +251,6 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
         View standings
       </button>
     </div>
-
-    <p class="text-danger mt-3">{{ errorMessage }}</p>
   </div>
 </template>
 

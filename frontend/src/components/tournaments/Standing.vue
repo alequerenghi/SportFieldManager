@@ -22,11 +22,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="results">
-    <table>
+  <div v-if="results" id="standing" class="container mt-4">
+    <table class="table table-dark table-hover">
       <thead v-if="sport === 'tennis'">
         <tr>
-          <th>Team name</th>
+          <th scope="col">Team name</th>
           <th>Points</th>
           <th>Matches played</th>
           <th>Sets won</th>
@@ -35,19 +35,21 @@ onMounted(async () => {
           <th>Matches won</th>
         </tr>
       </thead>
+
       <thead v-else>
         <tr>
-          <th>Team name</th>
-          <th>Score</th>
-          <th>Mastches played</th>
-          <th>{{ pointsCalled }} scored</th>
-          <th>{{ pointsCalled }} conceded</th>
-          <th>{{ pointsCalled }} difference</th>
+          <th scope="col">Team name</th>
+          <th scope="col">Score</th>
+          <th scope="col">Matches played</th>
+          <th scope="col">{{ pointsCalled }} scored</th>
+          <th scope="col">{{ pointsCalled }} conceded</th>
+          <th scope="col">{{ pointsCalled }} difference</th>
         </tr>
       </thead>
+
       <tbody v-if="sport === 'tennis'">
-        <tr v-for="[team, result] in results">
-          <td>{{ team }}</td>
+        <tr v-for="[team, result] in results" :key="team">
+          <th scope="row">{{ team }}</th>
           <td>{{ result.points }}</td>
           <td>{{ result.matchesPlayed }}</td>
           <td>{{ result.setsWon }}</td>
@@ -56,9 +58,10 @@ onMounted(async () => {
           <td>{{ result.matchesWon }}</td>
         </tr>
       </tbody>
+
       <tbody v-else>
-        <tr v-for="[team, result] in results">
-          <td>{{ team }}</td>
+        <tr v-for="[team, result] in results" :key="team">
+          <th scope="row">{{ team }}</th>
           <td>{{ result.score }}</td>
           <td>{{ result.matchesPlayed }}</td>
           <td>{{ result.goals[0] }}</td>
@@ -67,5 +70,18 @@ onMounted(async () => {
         </tr>
       </tbody>
     </table>
+
+    <RouterLink
+      :to="`/tournaments/${route.params.id}`"
+      class="btn btn-secondary"
+    >
+      Back to tournament
+    </RouterLink>
   </div>
 </template>
+
+<style scoped>
+#standing {
+  max-width: 650px;
+}
+</style>
