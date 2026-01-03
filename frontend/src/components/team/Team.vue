@@ -33,6 +33,7 @@ const addPlayer = () => {
 };
 
 const registerNewPlayers = async () => {
+  errorMessage.value = "";
   const response = await fetch(`/api/teams/${route.params.id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -40,43 +41,92 @@ const registerNewPlayers = async () => {
     credentials: "include",
   });
   if (!response.ok) {
-    errorMessage.value = await response.text();
+    const { error } = await response.json();
+    errorMessage.value = error;
   } else {
     await loadTeam();
   }
 };
 
 const loadTeam = async () => {
+  await auth.fetchUser();
+  errorMessage.value = "";
   adding.value = false;
   const response = await fetch(`/api/teams/${route.params.id}`);
-  team.value = await response.json();
+  if (!response.ok) {
+    const { status } = response;
+    const { error } = await response.json();
+    errorMessage.value = `Error ${status}: ${error}`;
+  } else {
+    team.value = await response.json();
+  }
 };
 
-onMounted(async () => {
-  await loadTeam();
-  await auth.fetchUser();
-});
+onMounted(async () => await loadTeam());
 </script>
 
 <template>
-  <div v-if="team">
-    <h1>{{ team.name }}</h1>
-    <form v-if="creator && adding" @submit.prevent="registerNewPlayers">
-      <input placeholder="Name" v-model="name" />
-      <input placeholder="Surname" v-model="surname" />
-      <input type="number" v-model="jerseyNumber" />
-      <button type="button" @click="addPlayer">Add player</button>
-      <button type="submit">Send data</button>
+  <div v-if="team" class="container mt-4" id="team">
+    <h1 class="mb-4">{{ team.name }}</h1>
+    <p v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</p>
+    <form
+      v-if="creator && adding"
+      @submit.prevent="registerNewPlayers"
+      class="mb-4"
+    >
+      <div class="row mb-3 align-items-center">
+        <label class="col-md-4 col-form-label">Player name</label>
+        <div class="col-md-8">
+          <input v-model="name" placeholder="Name" class="form-control" />
+        </div>
+      </div>
+      <div class="row mb-3 align-items-center">
+        <label class="col-md-4 col-form-label">Player surname</label>
+        <div class="col-md-8">
+          <input v-model="surname" placeholder="Surname" class="form-control" />
+        </div>
+      </div>
+      <div class="row mb-3 align-items-center">
+        <label class="col-md-4 col-form-label">
+          Player jersey (optional)
+        </label>
+        <div class="col-md-8">
+          <input type="number" v-model="jerseyNumber" class="form-control" />
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button
+          type="button"
+          @click="addPlayer"
+          class="btn btn-outline-success btn-sm col-md-2"
+        >
+          Add player
+        </button>
+        <button type="submit" class="btn btn-success btn-sm col-md-2">
+          Send data
+        </button>
+      </div>
     </form>
-    <ul>
+    <p><strong>Team members</strong></p>
+    <ul class="mb-4">
       <li v-for="(player, index) in team.players" :key="index">
-        {{ player.name }} {{ player.surname }}
-        {{ player.jerseyNumber ? `with number: ${player.jerseyNumber}` : "" }}
+        {{ player.name }} <strong>{{ player.surname }}</strong>
+        {{ player.jerseyNumber ? `: ${player.jerseyNumber}` : "" }}
       </li>
     </ul>
-    <button v-if="creator && !adding" type="submit" @click="adding = true">
+    <button
+      v-if="creator && !adding"
+      type="submit"
+      @click="adding = true"
+      class="btn btn-primary"
+    >
       Add new players
     </button>
-    <p>{{ errorMessage }}</p>
   </div>
 </template>
+
+<style scoped>
+#team {
+  max-width: 650px;
+}
+</style>

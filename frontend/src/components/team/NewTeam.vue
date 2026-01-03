@@ -7,6 +7,7 @@ const router = useRouter();
 const errorMessage = ref("");
 
 const registerTeam = async () => {
+  errorMessage.value = "";
   const payload = { name: name.value };
   const response = await fetch("/api/teams", {
     method: "POST",
@@ -15,7 +16,8 @@ const registerTeam = async () => {
     credentials: "include",
   });
   if (!response.ok) {
-    errorMessage.value = await response.text();
+    const { error } = await response.json();
+    errorMessage.value = error;
   } else {
     const { id } = await response.json();
     router.push(`/teams/${id}`);
