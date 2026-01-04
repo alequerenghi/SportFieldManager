@@ -31,36 +31,105 @@ onMounted(async () => {
 </script>
 
 <template>
-  <input placeholder="Search" v-model="searchBar" />
-  <div>
-    <h2 v-if="fields.length">Fields</h2>
-    <ul>
-      <li v-for="field in fields" :key="field.name">
-        <RouterLink :to="`/fields/${field._id}`">{{ field.name }}</RouterLink>
-      </li>
-    </ul>
-    <h2 v-if="tournaments.length">Tournaments</h2>
-    <ul>
-      <li v-for="tournament in tournaments" :key="tournament.name">
-        <RouterLink :to="`/tournaments/${tournament._id}`">{{
-          tournament.name
-        }}</RouterLink>
-      </li>
-    </ul>
-    <h2 v-if="teams.length">Teams</h2>
-    <ul>
-      <li v-for="team in teams" :key="team.name">
-        <RouterLink :to="`/teams/${team._id}`">{{ team.name }}</RouterLink>
-      </li>
-    </ul>
-    <h2 v-if="players.length">Players</h2>
-    <ul>
-      <li v-for="player in players" :key="player.surname">
-        {{ player.name }} {{ player.surname }}, {{ player.team
-        }}{{
-          player.jerseyNumber ? ` with number: ${player.jerseyNumber}` : ""
-        }}
-      </li>
-    </ul>
+  <div class="container mt-4" id="home">
+    <!-- Search -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <input
+          v-model="searchBar"
+          type="text"
+          class="form-control"
+          placeholder="Search fields, tournaments, teams, players"
+        />
+      </div>
+    </div>
+
+    <!-- Fields -->
+    <div class="row">
+      <div v-if="fields.length" class="col-md-6 col-lg-4">
+        <div class="card mb-4">
+          <div class="card-header">Fields</div>
+          <ul class="list-group list-group-flush">
+            <li
+              v-for="field in fields"
+              :key="field._id"
+              class="list-group-item"
+            >
+              <RouterLink :to="`/fields/${field._id}`">
+                {{ field.name }}
+              </RouterLink>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Tournaments -->
+
+      <div v-if="tournaments.length" class="col-md-6 col-lg-4">
+        <div class="card mb-4">
+          <div class="card-header">Tournaments</div>
+          <ul class="list-group list-group-flush">
+            <li
+              v-for="tournament in tournaments"
+              :key="tournament._id"
+              class="list-group-item"
+            >
+              <RouterLink :to="`/tournaments/${tournament._id}`">
+                {{ tournament.name }}
+              </RouterLink>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Teams -->
+      <div v-if="teams.length" class="col-md-6 col-lg-4">
+        <div class="card mb-4">
+          <div class="card-header">Teams</div>
+          <ul class="list-group list-group-flush">
+            <li v-for="team in teams" :key="team._id" class="list-group-item">
+              <RouterLink :to="`/teams/${team._id}`">
+                {{ team.name }}
+              </RouterLink>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Players -->
+      <div v-if="players.length" class="col-md-6 col-lg-4">
+        <div class="card mb-4">
+          <div class="card-header">Players</div>
+          <ul class="list-group list-group-flush">
+            <li
+              v-for="player in players"
+              :key="player._id"
+              class="list-group-item"
+            >
+              <div class="fw-bold">{{ player.name }} {{ player.surname }}</div>
+              <small class="text-muted">
+                Team: {{ player.team }}
+                <span v-if="player.jerseyNumber">
+                  · Jersey #{{ player.jerseyNumber }}
+                </span>
+              </small>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <p
+      v-if="
+        !fields.length &&
+        !tournaments.length &&
+        !teams.length &&
+        !players.length
+      "
+      class="text-muted text-center"
+    >
+      No results found
+    </p>
   </div>
 </template>
