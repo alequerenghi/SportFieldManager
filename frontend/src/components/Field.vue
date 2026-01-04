@@ -72,7 +72,7 @@ onMounted(async () => {
 <template>
   <div v-if="field" class="container mt-4" id="field">
     <h1 class="mb-3">{{ field.name }}</h1>
-    <p class="alert alert-danger">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</p>
     <ul class="list-unstyled mb-4">
       <li><strong>Location: </strong>{{ field.location }}</li>
       <li><strong>Sport: </strong> {{ field.sport }}</li>
