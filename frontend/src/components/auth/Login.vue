@@ -16,7 +16,8 @@ const login = async () => {
     credentials: "include",
   });
   if (!response.ok) {
-    errorMessage.value = await response.text();
+    const { error } = await response.json();
+    errorMessage.value = error;
   } else {
     router.push("/");
   }
@@ -24,12 +25,41 @@ const login = async () => {
 </script>
 
 <template>
-  <h1>Login</h1>
-  <form @submit.prevent="login">
-    <input type="text" v-model="username" placeholder="Username" required />
-    <input type="password" v-model="password" placeholder="Password" required />
-    <button type="submit">Login</button>
-  </form>
-  <p>{{ errorMessage }}</p>
-  <RouterLink to="/signup">Not a user, signup instead</RouterLink>
+  <div id="login-page" class="container">
+    <h1 class="mb-3">Login</h1>
+    <form @submit.prevent="login" class="mb-4">
+      <div class="row mb-3">
+        <label class="col-sm-2 col-form-label">Username</label>
+        <div class="col-sm-10">
+          <input
+            type="text"
+            v-model="username"
+            placeholder="Insert username"
+            required
+            class="form-control"
+          />
+        </div>
+      </div>
+      <div class="row mb-3">
+        <label class="col-sm-2 col-form-label">Username</label>
+        <div class="col-sm-10">
+          <input
+            type="password"
+            v-model="password"
+            placeholder="Password"
+            required
+          />
+        </div>
+      </div>
+      <button type="submit" class="btn btn-success">Login</button>
+    </form>
+    <p v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</p>
+    <RouterLink to="/signup">Not a user, signup instead</RouterLink>
+  </div>
 </template>
+
+<style scoped>
+#login-page {
+  max-width: 650px;
+}
+</style>
