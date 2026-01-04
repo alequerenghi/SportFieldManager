@@ -1,11 +1,12 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import Tennis from "./Tennis.vue";
 import SportResult from "./SportResult.vue";
 import { auth } from "@/stores/auth";
 
 const route = useRoute();
+const router = useRouter();
 const tournament = ref(null);
 const match = ref(null);
 const creator = computed(() => {
