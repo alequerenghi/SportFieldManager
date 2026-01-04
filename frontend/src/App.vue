@@ -20,7 +20,7 @@ onUpdated(pageState, () => console.log(pageState.value));
     /> -->
   </header>
 
-  <main>
+  <main class="container" id="app">
     <Navbar v-if="!route.meta.hideNavBar" />
     <router-view />
   </main>
