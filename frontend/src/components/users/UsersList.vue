@@ -19,12 +19,34 @@ onMounted(async () => await updateUsers(""));
 </script>
 
 <template>
-  <input v-model="searchBar" placeholder="Search" />
-  <ul>
-    <li v-for="user in users" :key="user.username">
-      <RouterLink :to="`/users/${user._id}`" :user="user">{{
-        user.username
-      }}</RouterLink>
-    </li>
-  </ul>
+  <div class="container mt-4" id="users">
+    <!-- Search -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <input
+          v-model="searchBar"
+          type="text"
+          class="form-control"
+          placeholder="Search users"
+        />
+      </div>
+    </div>
+
+    <!-- Users list -->
+    <div class="card">
+      <div class="card-header">Users</div>
+
+      <ul class="list-group list-group-flush">
+        <li v-for="user in users" :key="user._id" class="list-group-item">
+          <RouterLink :to="`/users/${user._id}`">
+            {{ user.username }}
+          </RouterLink>
+        </li>
+
+        <li v-if="!users.length" class="list-group-item text-muted">
+          No users found
+        </li>
+      </ul>
+    </div>
+  </div>
 </template>
