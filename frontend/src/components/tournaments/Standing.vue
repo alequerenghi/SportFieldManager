@@ -23,7 +23,7 @@ onMounted(async () => {
 
 <template>
   <div v-if="results" id="standing" class="container mt-4">
-    <table class="table table-dark table-hover">
+    <table class="table table-hover">
       <thead v-if="sport === 'tennis'">
         <tr>
           <th scope="col">Team name</th>
