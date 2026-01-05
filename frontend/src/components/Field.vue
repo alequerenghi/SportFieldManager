@@ -76,7 +76,7 @@ onMounted(async () => {
     <ul class="list-unstyled mb-4">
       <li><strong>Location: </strong>{{ field.location }}</li>
       <li><strong>Sport: </strong> {{ field.sport }}</li>
-      <li v-if="auth.authenticated" class="mb-2">
+      <li class="mb-2">
         <strong>Opening Hours:</strong>
         {{ `${field.slots[0]}-${field.slots[field.slots.length - 1]}` }}
       </li>
