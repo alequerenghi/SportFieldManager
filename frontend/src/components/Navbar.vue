@@ -21,67 +21,90 @@ onMounted(async () => await auth.fetchUser());
 </script>
 
 <template>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
     <div class="container-fluid">
-      <button @click="router.push('/')" class="btn btn-outline-success me-2">
-        Home
-      </button>
+      <!-- Brand / Home -->
+      <RouterLink to="/" class="navbar-brand"> Home </RouterLink>
+
+      <!-- Toggler -->
       <button
         class="navbar-toggler"
         type="button"
         data-bs-toggle="collapse"
-        data-bs-target="#navbarNavDropdown"
-        aria-controls="navbarNavDropdown"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
         aria-expanded="false"
         aria-label="Toggle navigation"
       >
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div
-        v-if="!auth.authenticated"
-        class="collapse navbar-collapse"
-        id="navbarNavDropdown"
-      >
-        <button
-          @click="router.push('/login')"
-          class="btn btn-sm btn-outline-secondary"
-        >
-          Login
-        </button>
-        <button
-          @click="router.push('/signup')"
-          class="btn btn-sm btn-outline-secondary"
-        >
-          Signup
-        </button>
-      </div>
-      <div v-else class="collapse navbar-collapse" id="navbarNavDropdown">
+
+      <!-- Nav content -->
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <!-- LEFT -->
         <ul class="navbar-nav">
           <li class="nav-item">
-            <button @click="logout" class="btn btn-sm btn-outline-secondary">
-              Logout
-            </button>
+            <RouterLink class="nav-link" to="/users">Users</RouterLink>
           </li>
-          <li class="nav-item dropdown">
-            <a
-              class="nav-link dropdown-toggle"
-              id="navbarDropdownMenuLink"
-              role="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              {{ auth.username }}
-            </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-              <RouterLink class="dropdown-item" to="/tournaments/new"
-                >New tournament</RouterLink
+        </ul>
+
+        <!-- RIGHT -->
+        <ul class="navbar-nav ms-lg-auto align-items-lg-center">
+          <!-- Not authenticated -->
+          <template v-if="!auth.authenticated">
+            <li class="nav-item mb-2 mb-lg-0 me-lg-2">
+              <RouterLink
+                to="/login"
+                class="btn btn-outline-secondary btn-sm w-100 w-lg-auto"
               >
-              <RouterLink class="dropdown-item" to="/teams/new"
-                >New team</RouterLink
+                Login
+              </RouterLink>
+            </li>
+
+            <li class="nav-item mb-2 mb-lg-0">
+              <RouterLink
+                to="/signup"
+                class="btn btn-outline-secondary btn-sm w-100 w-lg-auto"
               >
-              <RouterLink class="dropdown-item" to="/users">Users</RouterLink>
-            </div>
-          </li>
+                Signup
+              </RouterLink>
+            </li>
+          </template>
+
+          <!-- Authenticated -->
+          <template v-else>
+            <li class="nav-item mb-2 mb-lg-0 me-lg-2">
+              <button
+                @click="logout"
+                class="btn btn-outline-danger btn-sm w-100 w-lg-auto"
+              >
+                Logout
+              </button>
+            </li>
+
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                data-bs-toggle="dropdown"
+                role="button"
+              >
+                {{ auth.username }}
+              </a>
+
+              <ul class="dropdown-menu dropdown-menu-lg-end">
+                <li>
+                  <RouterLink class="dropdown-item" to="/tournaments/new">
+                    New tournament
+                  </RouterLink>
+                </li>
+                <li>
+                  <RouterLink class="dropdown-item" to="/teams/new">
+                    New team
+                  </RouterLink>
+                </li>
+              </ul>
+            </li>
+          </template>
         </ul>
       </div>
     </div>

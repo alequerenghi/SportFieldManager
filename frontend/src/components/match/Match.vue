@@ -59,7 +59,6 @@ onMounted(async () => await loadMatch());
 <template>
   <div v-if="match && tournament" id="match" class="container mt-4">
     <h1 class="mb-3">{{ tournament.name }}</h1>
-
     <h4 class="mb-3">
       <RouterLink :to="`/teams/${match.teams[0]._id}`">
         {{ match.teams[0].name }}
@@ -69,13 +68,11 @@ onMounted(async () => await loadMatch());
         {{ match.teams[1].name }}
       </RouterLink>
     </h4>
-
     <ul class="list-group list-group-flush mb-4">
       <li class="list-group-item">
         <strong>Date:</strong>
         {{ new Date(match.date).toDateString() }}
       </li>
-
       <li class="list-group-item">
         <strong>Status:</strong>
         <span
@@ -91,20 +88,15 @@ onMounted(async () => await loadMatch());
 
     <div v-if="match.result" class="card mb-4">
       <div class="card-header">Match result</div>
-
       <div class="card-body">
-        <!-- TENNIS -->
         <ul v-if="tournament.sport === 'tennis'" class="mb-0 list-unstyled">
           <li v-for="([home, away], index) in match.result" :key="index">
             {{ home }} – {{ away }}
           </li>
         </ul>
-
-        <!-- OTHER SPORTS (if you add later) -->
         <p v-else class="mb-0">{{ match.result[0] }} – {{ match.result[1] }}</p>
       </div>
     </div>
-
     <div v-if="canAddResults" class="mb-4">
       <button
         v-if="!adding"
@@ -113,7 +105,6 @@ onMounted(async () => await loadMatch());
       >
         Add results
       </button>
-
       <div v-if="adding" class="mt-3 p-3 border rounded">
         <Tennis
           v-if="tournament.sport === 'tennis'"
@@ -123,11 +114,9 @@ onMounted(async () => await loadMatch());
         <SportResult v-else @update="updateResult" :match="match" />
       </div>
     </div>
-
     <button @click="router.go(-1)" class="btn btn-secondary btn-sm">
       Back to schedule
     </button>
-
     <p v-if="errorMessage" class="alert alert-danger mt-3">
       {{ errorMessage }}
     </p>

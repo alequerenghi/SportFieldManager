@@ -85,6 +85,7 @@ onMounted(async () => {
         <input type="date" v-model="calendar" class="form-control" />
       </form>
       <div v-if="auth.authenticated" class="d-grid d-md-block">
+        <p>Bookable slots:</p>
         <ul class="list-unstyled">
           <li v-for="slot in slots" :key="slot.slot" class="mb-2">
             <div class="d-flex align-items-center gap-2">

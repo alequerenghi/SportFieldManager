@@ -110,7 +110,7 @@ onMounted(async () => {
               <small class="text-muted">
                 Team: {{ player.team }}
                 <span v-if="player.jerseyNumber">
-                  · Jersey #{{ player.jerseyNumber }}
+                  · #{{ player.jerseyNumber }}
                 </span>
               </small>
             </li>
@@ -133,3 +133,5 @@ onMounted(async () => {
     </p>
   </div>
 </template>
+
+<style scoped></style>

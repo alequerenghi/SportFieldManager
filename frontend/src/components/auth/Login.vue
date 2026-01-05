@@ -41,13 +41,14 @@ const login = async () => {
         </div>
       </div>
       <div class="row mb-3">
-        <label class="col-sm-2 col-form-label">Username</label>
+        <label class="col-sm-2 col-form-label">Password</label>
         <div class="col-sm-10">
           <input
             type="password"
             v-model="password"
             placeholder="Password"
             required
+            class="form-control"
           />
         </div>
       </div>

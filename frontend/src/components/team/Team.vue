@@ -98,12 +98,12 @@ onMounted(async () => await loadTeam());
         <button
           type="button"
           @click="addPlayer"
-          class="btn btn-outline-success btn-sm col-md-2"
+          class="btn btn-outline-primary btn-sm col-md-2"
         >
           Add player
         </button>
         <button type="submit" class="btn btn-success btn-sm col-md-2">
-          Send data
+          Save
         </button>
       </div>
     </form>
@@ -111,7 +111,7 @@ onMounted(async () => await loadTeam());
     <ul class="mb-4">
       <li v-for="(player, index) in team.players" :key="index">
         {{ player.name }} <strong>{{ player.surname }}</strong>
-        {{ player.jerseyNumber ? `: ${player.jerseyNumber}` : "" }}
+        {{ player.jerseyNumber ? `: #${player.jerseyNumber}` : "" }}
       </li>
     </ul>
     <button
