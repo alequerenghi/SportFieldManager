@@ -1,62 +1,23 @@
 import express from "express";
-import cookieParser from "cookie-parser";
 import path from "path";
-import { fileURLToPath } from "url";
-import { verifyToken } from "./utils.js";
-import {
-  auth,
-  fields,
-  matches,
-  tournaments,
-  users,
-  teams,
-} from "./routes/index.js";
+import cookieParser from "cookie-parser";
+import router from "./routes/index.js";
 import getConnection from "./dbConnector.js";
 const PORT = 3000;
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.resolve();
 
 const app = express();
+app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(cookieParser());
-app.use("/api/auth", auth);
-app.use(express.static(path.join(__dirname, "../frontend/dist")));
-app.use("/api/fields", fields);
-app.use("/api/tournaments", tournaments);
-app.use("/api/matches", matches);
-app.use("/api/users", users);
-app.use("/api/teams", teams);
 
-app.get("/api/whoami", verifyToken, (req, res) => {
-  res.json({ authenticated: true, ...req.token });
-});
+app.use("/api", router);
 
-app.get("/api/players", async (req, res, next) => {
-  try {
-    const { q } = req.query;
-    const regex = { $regex: q, $options: "i" };
-    const db = await getConnection();
-    const players = await db
-      .collection("players")
-      .find({
-        $or: [{ name: regex }, { surname: regex }],
-      })
-      .toArray();
-    const teamIds = [...new Set(players.map((p) => p.teamId))];
-    const teams = await db
-      .collection("teams")
-      .find({ _id: { $in: teamIds } })
-      .toArray();
-    players.forEach((p) => {
-      p.team = teams.find((t) => t._id.toString() === p.teamId.toString()).name;
-    });
-    res.json(players);
-  } catch (error) {
-    next(error);
-  }
-});
+app.get("/{*any}", (req, res) =>
+  res.sendFile(path.join(__dirname, "public/index.html"))
+);
+
 app.use((err, req, res, next) => {
   console.log(err);
   const status = err.status || 500;
@@ -76,7 +37,6 @@ app.use((err, req, res, next) => {
   } else {
     message = err.message;
   }
-  console.log(status, message);
   res.status(status).json({ error: message });
 });
 
@@ -93,9 +53,6 @@ const createIndexes = async (db) => {
   await db.collection("matches").createIndex({ tournamentId: 1, round: 1 });
   await db.collection("matches").createIndex({ tournamentId: 1, status: 1 });
 };
-// app.get("/*", (req, res) =>
-//   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"))
-// );
 
 const db = await getConnection();
 await createIndexes(db);

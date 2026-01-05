@@ -71,7 +71,6 @@ router.put("/:id", verifyToken, async (req, res, next) => {
     if (team.userId.toString() !== req.token._id) {
       throw new HttpError(403);
     }
-    console.log(req.body);
     const parsed = PlayerSchema.safeParse(req.body);
     if (!parsed.success) {
       throw new HttpError(400, "Invalid payload structure");

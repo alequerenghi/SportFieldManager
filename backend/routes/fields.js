@@ -43,8 +43,6 @@ router.get("/:id/slots", verifyTokenNotRequired, async (req, res, next) => {
       const booking = bookingMap.get(slot);
       const slotDateTime = new Date(date);
       slotDateTime.setHours(hour, 0, 0, 0);
-      booking && console.log(booking.userId);
-      req.token && console.log(req.token._id);
       return {
         _id: booking?._id,
         slot,

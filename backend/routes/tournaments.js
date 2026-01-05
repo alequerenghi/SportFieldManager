@@ -70,7 +70,6 @@ const computeTennisStandings = (matches) => {
   const standings = {};
 
   for (const match of matches) {
-    console.log(match.result);
     const [teamA, teamB] = match.teams;
 
     if (!standings[teamA]) {
@@ -211,7 +210,6 @@ router.put("/:id", verifyToken, assertCreator, async (req, res, next) => {
       .collection("tournaments")
       .updateOne({ _id: new ObjectId(id) }, { $set: update });
     if (result.matchedCount === 0) {
-      console.log(result);
       throw new HttpError(500);
     }
     res.sendStatus(200);
@@ -320,7 +318,6 @@ router.get("/:id/standings", async (req, res, next) => {
       .collection("matches")
       .find({ tournamentId: id, status: "completed" })
       .toArray();
-    console.log(matches);
     const standings =
       tournament.sport === "tennis"
         ? computeTennisStandings(matches)

@@ -6,7 +6,6 @@ let mongoClient = null;
 
 const getConnection = async () => {
   if (cachedDb) {
-    console.log("Retrieved connection");
     return cachedDb;
   }
   mongoClient = new MongoClient(uri);
@@ -22,17 +21,3 @@ const getConnection = async () => {
 };
 
 export default getConnection;
-// const closeConnection = async () => {
-//     try {
-//         if (!cachedDb) {
-//             await mongoClient.close();
-//             cachedDb = null;
-//             mongoClient = null;
-//             console.log("Connection closed");
-//             return true;
-//         }
-//     } catch (error) {
-//         console.error("Error in closing connection => ", error);
-//         return false;
-//     }
-// }
